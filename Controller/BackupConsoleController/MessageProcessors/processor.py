@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 
 class Processor:
-    def __init__(self, sender):
+    def __init__(self):
         self._sender = sender
 
     @abstractmethod

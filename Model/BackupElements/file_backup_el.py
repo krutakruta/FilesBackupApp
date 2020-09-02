@@ -7,6 +7,9 @@ class FileBackupElement(IBackupElement):
         self._file_path = None
         self._include_flag = True
 
+    def set_file_path(self, file_path):
+        self._file_path = file_path
+
     @property
     def title(self):
         return self._file_path

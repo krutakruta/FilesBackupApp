@@ -1,1 +1,4 @@
 .idea
+Model/BackupElements/__pycache__/
+Model/__pycache__/
+Utilities/__pycache__/
