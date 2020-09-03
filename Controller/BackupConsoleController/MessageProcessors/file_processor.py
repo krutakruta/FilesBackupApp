@@ -1,16 +1,31 @@
-from Controller.BackupConsoleController.MessageProcessors.processor import Processor
+from Controller.BackupConsoleController.MessageProcessors\
+    .processor import Processor
 from re import match
+from Model.BackupElements.file_backup_el import FileBackupElement
 
 
 class FileProcessor(Processor):
-    def __init__(self, current_backup_task):
+    def __init__(self, current_backup_task, sender):
         self._current_backup_task = current_backup_task
+        self._sender = sender
 
-    def fit_for_request(self, string):
-        return match("add file /w/W*|remove file /w/W*") is not None
+    def fit_for_request(self, str_request):
+        return match("add file .*|remove file .*", str_request) is not None
 
-    def process_request(self, string):
-        pass
+    def process_request(self, str_request):
+        command = match("(\w)+ file (.+) .*", str_request).group(1)
+        path_match = match("\w+ file (.+) .*", str_request)
+        if command == "add":
+            if path_match is None:
+                self._sender.send_text("Задайте путь к файлу")
+            else:
+                self._current_backup_task.add_backup_element(
+                    FileBackupElement(path_match.group(1)))
+            return True
+        elif command == "remove":
+            pass
+        else:
+            self._sender.send_text("Неправильный запрос")
 
     @property
     def help(self):

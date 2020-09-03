@@ -19,8 +19,7 @@ def launch_console_mode(model):
 
 
 def main():
-    if len(sys.argv) > 1:
-        launch_console_mode(BackupProgramModel())
+    launch_console_mode(BackupProgramModel())
 
 
 if __name__ == "__main__":

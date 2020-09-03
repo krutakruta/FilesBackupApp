@@ -3,12 +3,13 @@ from Utilities.useful_functions import check_type_decorator
 
 
 class FileBackupElement(IBackupElement):
-    def __init__(self):
-        self._file_path = None
+    def __init__(self, file_path=None):
+        self._file_path = file_path
         self._include_flag = True
 
     def set_file_path(self, file_path):
         self._file_path = file_path
+
 
     @property
     def title(self):

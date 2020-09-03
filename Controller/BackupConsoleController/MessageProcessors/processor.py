@@ -2,15 +2,12 @@ from abc import abstractmethod
 
 
 class Processor:
-    def __init__(self):
-        self._sender = sender
-
     @abstractmethod
-    def fit_for_request(self, string):
+    def fit_for_request(self, str_request):
         raise NotImplementedError()
 
     @abstractmethod
-    def process_request(self, string):
+    def process_request(self, str_request):
         raise NotImplementedError()
 
     @property

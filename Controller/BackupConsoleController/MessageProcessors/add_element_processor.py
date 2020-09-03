@@ -8,7 +8,7 @@ class AddElementProcessor(Processor):
         self._adding_element_processors = adding_element_processors
         self._current_adding_processor = None
 
-    def fit_for_request(self, string):
+    def fit_for_request(self, str_request):
         return match("/w+? /w/W") is not None
 
     @property
