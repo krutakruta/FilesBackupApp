@@ -10,3 +10,7 @@ class BackupTask:
     @check_type_decorator(IBackupElement)
     def add_backup_element(self, element):
         self._backup_elements.append(element)
+
+    @property
+    def name(self):
+        return self._name
