@@ -1,12 +1,15 @@
 from Model.backup_task import BackupTask
+from Model.model_exceptions import TaskWithTheSameNameAlreadyExist
 
 
 class BackupProgramModel:
     def __init__(self):
-        self._tasks = []
+        self._tasks = {}
 
-    def create_task(self):
-        self._tasks.append(BackupTask())
+    def create_task(self, task_name):
+        if task_name in self._tasks:
+            raise TaskWithTheSameNameAlreadyExist()
+        self._tasks[task_name] = BackupTask(task_name)
 
-    def get_tasks_list(self):
+    def get_tasks_dict(self):
         return self._tasks

@@ -3,8 +3,9 @@ from Model.BackupElements.i_backup_element import IBackupElement
 
 
 class BackupTask:
-    def __init__(self):
+    def __init__(self, name):
         self._backup_elements = []
+        self._name = name
 
     @check_type_decorator(IBackupElement)
     def add_backup_element(self, element):
