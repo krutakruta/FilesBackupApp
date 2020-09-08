@@ -14,7 +14,7 @@ class BackupProgramModel:
 
     def delete_task(self, task_name):
         if task_name not in self._tasks:
-            raise ThereIsNoTaskWithSuchName
+            raise ThereIsNoTaskWithSuchName()
         del self._tasks[task_name]
 
     def get_tasks_dict(self):

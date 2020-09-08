@@ -5,3 +5,5 @@ Utilities/__pycache__/
 View/ConsoleView/__pycache__/
 Controller/BackupConsoleController/__pycache__/
 Controller/BackupConsoleController/MessageProcessors/__pycache__/
+credentials.json
+x.py

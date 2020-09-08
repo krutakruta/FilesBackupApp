@@ -10,6 +10,8 @@ class FileBackupElement(IBackupElement):
     def set_file_path(self, file_path):
         self._file_path = file_path
 
+    def is_ready_for_backup(self):
+        return self._file_path is not None
 
     @property
     def title(self):

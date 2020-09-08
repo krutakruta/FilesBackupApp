@@ -13,8 +13,8 @@ class FileProcessor(Processor):
         return match("add file .*|remove file .*", str_request) is not None
 
     def process_request(self, str_request):
-        command = match("(\w)+ file (.+) .*", str_request).group(1)
-        path_match = match("\w+ file (.+) .*", str_request)
+        command = match(r"(\w)+ file (.+) .*", str_request).group(1)
+        path_match = match(r"\w+ file (.+) .*", str_request)
         if command == "add":
             if path_match is None:
                 self._sender.send_text("Задайте путь к файлу")

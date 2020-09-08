@@ -37,6 +37,7 @@ class MainProcessor(Processor):
                 self._sender.send_text(f"Бэкап {task_name} создан")
             except TaskWithTheSameNameAlreadyExist:
                 self._sender.send_text("Бэкап с таким именем уже существует")
+
         elif match(r"delete task .+", str_request) is not None:
             task_name = match(r"delete task (.+)").group(1)
             try:
@@ -44,6 +45,7 @@ class MainProcessor(Processor):
                 self._sender.send_text(f"Бэкап {task_name} удален")
             except ThereIsNoTaskWithSuchName:
                 self._sender.send_text("Бэкапа с таким именем не существует")
+
         elif match(r"setup task .+", str_request) is not None:
             self._state = CreatingTaskState.SETTING_UP_TASK
             task_name = match(r"setup task (.+)", str_request).group(1)
@@ -52,10 +54,13 @@ class MainProcessor(Processor):
                 return False
             self._current_task_to_setup =\
                 self._backup_program_model.get_tasks_dict()[task_name]
+
         elif match(r"tasks list", str_request) is not None:
-            self._send_task_list()
+            self._send_tasks_list()
+
         elif str_request == "help":
             self._sender.send_text(self.help)
+
         elif str_request == "exit":
             return True
         else:
@@ -85,7 +90,7 @@ class MainProcessor(Processor):
     def _send_i_dont_understand(self):
         self._sender.send_text("Не понял запрос. Справка: help")
 
-    def _send_task_list(self):
+    def _send_tasks_list(self):
         task_dict = self._backup_program_model.get_tasks_dict()
         if len(task_dict) == 0:
             self._sender.send_text("Список пуст")
