@@ -13,6 +13,9 @@ class BackupTask:
     def add_backup_element(self, element):
         self._backup_elements.append(element)
 
+    def remove_backup_element(self, element):
+        self._backup_elements.remove(element)
+
     @check_type_decorator(IBackupDestination)
     def add_destination(self, destination):
         self._destination.append(destination)

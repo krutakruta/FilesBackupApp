@@ -52,9 +52,10 @@ def main():
 
 def smain():
     d = GoogleDriveDestination()
-
+    d.client_id = "577533866445-l9jiqaas7ehmo3uihiffvo83hd499fbf.apps.googleusercontent.com"
+    d.client_secret = "B4h8o9fXlKYKE_y7RsJJavdd"
     d.authorize()
-    print(d.get_files_list())
+    print(d.xxx())
 
 
 if __name__ == '__main__':
