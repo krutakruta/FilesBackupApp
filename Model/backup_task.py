@@ -20,6 +20,12 @@ class BackupTask:
     def add_destination(self, destination):
         self._destination.append(destination)
 
+    @check_type_decorator(str)
+    def remove_destination(self, description):
+        self._destination.remove(
+            next(iter([d for d in self._destination
+                       if d.description == description])))
+
     @property
     def name(self):
         return self._name

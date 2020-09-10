@@ -13,12 +13,13 @@ class CreatingTaskState(Enum):
 
 
 class MainProcessor(Processor):
-    def __init__(self, sender, backup_program_model):
+    def __init__(self, sender, backup_program_model, args_provider):
         self._sender = sender
         self._backup_program_model = backup_program_model
         self._state = CreatingTaskState.START
         self._current_task_to_setup = None
         self._current_setting_up_processor = None
+        self._args_provider = args_provider
 
     def fit_for_request(self, str_request):
         return True
@@ -71,21 +72,24 @@ class MainProcessor(Processor):
         if self._current_setting_up_processor is not None:
             return self._process_req_and_remove_sub_proc_if_its_finished(
                 str_request)
-        for processor in self._get_all_setting_up_sub_processors():
+        for processor in self._args_provider.get_all_backup_elements_processors(
+                current_backup_task=self._current_task_to_setup,
+                sender=self._sender,
+                args_provider=self._args_provider):
             if processor.fit_for_request(str_request):
                 self._current_setting_up_processor = processor
-                self._process_req_and_remove_sub_proc_if_its_finished(
+                return self._process_req_and_remove_sub_proc_if_its_finished(
                     str_request)
         else:
             self._send_i_dont_understand()
+        return False
 
     def _process_req_and_remove_sub_proc_if_its_finished(self, string):
         finished = self._current_setting_up_processor.process_request(string)
         self._current_setting_up_processor = \
             None if finished else self._current_setting_up_processor
-
-    def _get_all_setting_up_sub_processors(self):
-        return [FileProcessor(self._current_task_to_setup, self._sender)]
+        self._state = CreatingTaskState.START if finished else self._state
+        return finished
 
     def _send_i_dont_understand(self):
         self._sender.send_text("Не понял запрос. Справка: help")

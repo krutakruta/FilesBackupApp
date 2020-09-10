@@ -58,5 +58,13 @@ def smain():
     print(d.xxx())
 
 
+def y(a, b):
+    print(a, b)
+
+
+def x(*args, **kwargs):
+    y(*args, **kwargs)
+
+
 if __name__ == '__main__':
-    smain()
+    x(11, b=10)

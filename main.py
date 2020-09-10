@@ -1,6 +1,5 @@
 from Model.backup_program_model import BackupProgramModel
-from Controller.BackupConsoleController.MessageProcessors.\
-    file_processor import FileProcessor
+from Utilities.ArgsProvider.args_provider import ArgsProvider
 from Controller.BackupConsoleController.MessageProcessors.\
     main_processor import MainProcessor
 from Controller.BackupConsoleController.\
@@ -11,8 +10,9 @@ import sys
 
 def launch_console_mode(model):
     message_sender = ConsoleMessageSender()
+    args_provider = ArgsProvider()
     controller = BackupConsoleController(
-        model, MainProcessor(message_sender, model))
+        model, MainProcessor(message_sender, model, args_provider))
     controller.start_messaging()
 
 
