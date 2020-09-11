@@ -4,7 +4,7 @@ from abc import abstractmethod
 class IBackupDestination:
     @property
     @abstractmethod
-    def description(self):
+    def title(self):
         raise NotImplementedError()
 
     @property
@@ -15,4 +15,8 @@ class IBackupDestination:
     @property
     @abstractmethod
     def include(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def deliver_element(self, element):
         raise NotImplementedError()

@@ -1,6 +1,4 @@
 from abc import abstractmethod
-from Controller.BackupConsoleController.MessageProcessors\
-    .google_drive_destination_processor import GoogleDriveDestinationProcessor
 
 
 class IBackupElementProcessorsProvider:
@@ -15,6 +13,13 @@ class IDestinationProcessorsProvider:
         raise NotImplementedError()
 
 
+class ISettingUpProcessorsProvider:
+    @abstractmethod
+    def get_all_setting_up_processors(self):
+        raise NotImplementedError()
+
+
 class IArgsProvider(IDestinationProcessorsProvider,
-                    IBackupElementProcessorsProvider):
+                    IBackupElementProcessorsProvider,
+                    ISettingUpProcessorsProvider):
     pass

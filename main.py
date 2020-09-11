@@ -1,11 +1,9 @@
 from Model.backup_program_model import BackupProgramModel
 from Utilities.ArgsProvider.args_provider import ArgsProvider
-from Controller.BackupConsoleController.MessageProcessors.\
-    main_processor import MainProcessor
+from Controller.BackupConsoleController.main_processor import MainProcessor
 from Controller.BackupConsoleController.\
     backup_console_controller import BackupConsoleController
 from View.ConsoleView.console_message_sender import ConsoleMessageSender
-import sys
 
 
 def launch_console_mode(model):

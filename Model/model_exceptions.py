@@ -4,3 +4,7 @@ class TaskWithTheSameNameAlreadyExist(Exception):
 
 class ThereIsNoTaskWithSuchName(Exception):
     pass
+
+
+class GoogleDriveIsNotReadyToAuthorize(Exception):
+    pass

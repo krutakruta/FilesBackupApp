@@ -1,8 +1,10 @@
 from Model.BackupElements.i_backup_element import IBackupElement
+from Model.BackupElements\
+    .i_google_drive_backupable import IGoogleDriveBackupable
 from Utilities.useful_functions import check_type_decorator
 
 
-class FileBackupElement(IBackupElement):
+class FileBackupElement(IBackupElement, IGoogleDriveBackupable):
     def __init__(self, file_path=None):
         self._file_path = file_path
         self._include_flag = True
@@ -12,6 +14,9 @@ class FileBackupElement(IBackupElement):
 
     def is_ready_for_backup(self):
         return self._file_path is not None
+
+    def backup_to_google_drive(self, google_service):
+        print("file backup")
 
     @property
     def title(self):

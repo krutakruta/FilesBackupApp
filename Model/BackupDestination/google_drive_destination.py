@@ -2,6 +2,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 from Model.BackupDestination.i_backup_destination import IBackupDestination
+from Model.BackupElements\
+    .i_google_drive_backupable import IGoogleDriveBackupable
+from Model.model_exceptions import GoogleDriveIsNotReadyToAuthorize
 from Utilities.useful_functions import check_type_decorator
 
 
@@ -13,23 +16,26 @@ class Graph:
 
 
 class GoogleDriveDestination(IBackupDestination):
-    def __init__(self, name="GoogleDrive", client_id=None, client_sec=None):
-        self.name = name
+    def __init__(self, args_provider, title="GoogleDrive", client_id=None, client_sec=None):
+        self._title = title
         self._include_flag = True
+        self._sub_path = "/"
         self._credentials = self._create_credentials(client_id, client_sec)
         self._scopes = ['https://www.googleapis.com/auth/drive']
         self._service = None
+        self._args_provider = args_provider
 
-    def is_ready_to_authorize(self):
+    def ready_to_authorize(self):
         return (self._credentials["installed"]["client_id"] and
                 self._credentials["installed"]["client_secret"])
 
     def authorize(self):
-        if self.is_ready_to_authorize():
-            creds = InstalledAppFlow.from_client_config(
-                self._credentials, self._scopes) \
-                .run_local_server(port=0)
-            self._service = build("drive", "v3", credentials=creds)
+        if not self.ready_to_authorize():
+            raise GoogleDriveIsNotReadyToAuthorize()
+        creds = InstalledAppFlow.from_client_config(
+            self._credentials, self._scopes) \
+            .run_local_server(port=0)
+        self._service = build("drive", "v3", credentials=creds)
 
     def get_directory_content_list(self, directory):
         if directory == "/":
@@ -37,6 +43,20 @@ class GoogleDriveDestination(IBackupDestination):
                                self._get_all_files_list(
                                    ["id", "name", "parents"])))
         raise NotImplementedError()
+
+    def deliver_element(self, element):
+        try:
+            if self._service is None:
+                self.authorize()
+            if not isinstance(element, IGoogleDriveBackupable):
+                return f"Google drive: не удалось доставить {element.title}," \
+                       f"т.к. эта функция для данного элемента не поддерживается"
+            return element.backup_to_google_drive(self._service)
+        except GoogleDriveIsNotReadyToAuthorize:
+            return "Не удалось доставить элемент(-ы)," \
+                   "т.к. программа не авторизована в google drive"
+        except Exception:
+            return "Неизвестная ошибка в Google Drive destination"
 
     def _get_all_files_list(self, file_fields):
         files = []
@@ -88,8 +108,8 @@ class GoogleDriveDestination(IBackupDestination):
         return self._credentials["installed"]["client_secret"]
 
     @property
-    def description(self):
-        return self.name
+    def title(self):
+        return self._title
 
     @property
     def type_description(self):
@@ -113,6 +133,11 @@ class GoogleDriveDestination(IBackupDestination):
     @check_type_decorator(bool)
     def include(self, value):
         self._include_flag = value
+
+    @title.setter
+    @check_type_decorator(str)
+    def title(self, value):
+        self._title = value
 
     def _create_credentials(self, client_id, client_secret):
         return {"installed": {
