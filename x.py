@@ -1,4 +1,3 @@
-from __future__ import print_function
 import pickle
 import os.path
 from googleapiclient.discovery import build
@@ -41,7 +40,6 @@ def main():
     results = service.files().list(
         pageSize=30, fields="nextPageToken, files(id, name)").execute()
     items = results.get('files', [])
-
     if not items:
         print('No files found.')
     else:
@@ -57,11 +55,17 @@ def smain():
     d.authorize()
     print(d.xxx())
 
+def ddd():
+    try:
+        media = http.MediaFileUpload(r"C:\Users\Kruta\Desktop\ярлыки\Лекции КА", resumable=True)
+    except (FileNotFoundError, AttributeError, PermissionError):
+        print("файл не найден")
+
+
+def sss():
+    print("sss")
+
 
 if __name__ == '__main__':
-    x = set()
-    x.add("a")
-    x.add("b")
-    x.add("b")
-    for i in x:
-        print(i)
+    ddd()
+    sss()

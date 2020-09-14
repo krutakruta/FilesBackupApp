@@ -33,7 +33,8 @@ class BackupTask:
         result_log = set()
         for destination in self._destination:
             for backup_element in self._backup_elements:
-                result_log.append(destination.deliver_element(backup_element))
+                result_log.add(destination.deliver_element(backup_element))
+        return result_log
 
     @property
     def name(self):

@@ -35,35 +35,47 @@ class MainProcessor(Processor):
 
     def _process_request_start_state(self, str_request):
         if match(r"create task .+", str_request) is not None:
-            task_name = match(r"create task (.+)", str_request).group(1)
-            try:
-                self._backup_program_model.create_task(task_name)
-                self._sender.send_text(f"Бэкап {task_name} создан")
-            except TaskWithTheSameNameAlreadyExist:
-                self._sender.send_text("Бэкап с таким именем уже существует")
+            self._create_task(match(r"create task (.+)", str_request)
+                              .group(1))
 
         elif match(r"delete task .+", str_request) is not None:
-            task_name = match(r"delete task (.+)").group(1)
-            try:
-                self._backup_program_model.delete_task(task_name)
-                self._sender.send_text(f"Бэкап {task_name} удален")
-            except ThereIsNoTaskWithSuchName:
-                self._sender.send_text("Бэкапа с таким именем не существует")
+            self._delete_task(match(r"delete task (.+)", str_request)
+                              .group(1))
 
         elif match(r"setup task .+", str_request) is not None:
-            task_name = match(r"setup task (.+)", str_request).group(1)
-            if task_name not in self._backup_program_model.get_tasks_dict():
-                self._sender.send_text("Такого бэкапа не существует")
-                return False
-            self._current_task_to_setup =\
-                self._backup_program_model.get_tasks_dict()[task_name]
-            self._state = CreatingTaskState.SETTING_UP_TASK
+            self._setup_task(match(r"setup task (.+)", str_request).group(1))
 
         elif match(r"tasks list", str_request) is not None:
             self._send_tasks_list()
+
+        elif match(r"launch backup .+", str_request) is not None:
+            print(self._backup_program_model.launch_backup(
+                match(r"launch backup (.+)", str_request).group(1)))
         else:
             self._send_i_dont_understand()
         return False
+
+    def _create_task(self, task_name):
+        try:
+            self._backup_program_model.create_task(task_name)
+            self._sender.send_text(f"Бэкап {task_name} создан")
+        except TaskWithTheSameNameAlreadyExist:
+            self._sender.send_text("Бэкап с таким именем уже существует")
+
+    def _delete_task(self, task_name):
+        try:
+            self._backup_program_model.delete_task(task_name)
+            self._sender.send_text(f"Бэкап {task_name} удален")
+        except ThereIsNoTaskWithSuchName:
+            self._sender.send_text("Бэкапа с таким именем не существует")
+
+    def _setup_task(self, task_name):
+        if task_name not in self._backup_program_model.get_tasks_dict():
+            self._sender.send_text("Такого бэкапа не существует")
+            return False
+        self._current_task_to_setup = \
+            self._backup_program_model.get_tasks_dict()[task_name]
+        self._state = CreatingTaskState.SETTING_UP_TASK
 
     def _process_request_setting_up_task_state(self, str_request):
         if str_request == "back":
@@ -120,7 +132,9 @@ class MainProcessor(Processor):
 Удаление бэкапа:
 - delete task task_name
 Список бэкапов:
-- tasks list"""
+- tasks list
+Запустить бэкап:
+- launch backup task_name"""
         else:
             return """Доступные команды:
 - add/remove file file_name/file_path

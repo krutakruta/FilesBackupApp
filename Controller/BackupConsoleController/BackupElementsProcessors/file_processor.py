@@ -22,6 +22,7 @@ class FileProcessor(BackupProgramProcessor):
                 return False
             self._current_backup_task.add_backup_element(
                 FileBackupElement(path_match.group(1)))
+            self._sender.send_text("Файл добавлен")
             return True
         elif command == "remove":
             self._current_backup_task.remove_backup_element(

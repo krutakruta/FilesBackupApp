@@ -17,5 +17,10 @@ class BackupProgramModel:
             raise ThereIsNoTaskWithSuchName()
         del self._tasks[task_name]
 
+    def launch_backup(self, task_name):
+        if task_name not in self._tasks:
+            raise ThereIsNoTaskWithSuchName()
+        self._tasks[task_name].launch_backup()
+
     def get_tasks_dict(self):
         return self._tasks

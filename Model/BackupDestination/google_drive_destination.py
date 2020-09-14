@@ -51,11 +51,13 @@ class GoogleDriveDestination(IBackupDestination):
             if not isinstance(element, IGoogleDriveBackupable):
                 return f"Google drive: не удалось доставить {element.title}," \
                        f"т.к. эта функция для данного элемента не поддерживается"
-            return element.backup_to_google_drive(self._service)
+            return element.backup_to_google_drive(
+                self._service, sub_path=self._sub_path)
         except GoogleDriveIsNotReadyToAuthorize:
             return "Не удалось доставить элемент(-ы)," \
                    "т.к. программа не авторизована в google drive"
         except Exception:
+            raise
             return "Неизвестная ошибка в Google Drive destination"
 
     def _get_all_files_list(self, file_fields):
@@ -119,6 +121,10 @@ class GoogleDriveDestination(IBackupDestination):
     def include(self):
         return self._include_flag
 
+    @property
+    def sub_path(self):
+        return self._sub_path
+
     @client_id.setter
     @check_type_decorator(str)
     def client_id(self, value):
@@ -138,6 +144,11 @@ class GoogleDriveDestination(IBackupDestination):
     @check_type_decorator(str)
     def title(self, value):
         self._title = value
+
+    @sub_path.setter
+    @check_type_decorator(str)
+    def sub_path(self, value):
+        self._sub_path = value
 
     def _create_credentials(self, client_id, client_secret):
         return {"installed": {

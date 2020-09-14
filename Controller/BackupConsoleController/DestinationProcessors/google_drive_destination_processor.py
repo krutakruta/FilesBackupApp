@@ -39,6 +39,8 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
             else:
                 self._current_destination = GoogleDriveDestination(
                     self._args_provider)
+                self._current_backup_task.add_destination(
+                    self._current_destination)
                 self._sender.send_text("Google Drive назначение создано")
                 self._sender.send_text("Введите название: ", end="")
                 self._state = GDDProcessorState.NAMING
@@ -56,7 +58,7 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
             self._current_destination.client_secret = re.match(
                 r"(.+)", str_request).group(1)
             self._current_destination.authorize()
-            self._sender.send_text("Вы авторизованы")
+            self._sender.send_text("Вы авторизованы. Google drive добавлен")
             return True
         return False
 
