@@ -33,16 +33,16 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
         elif str_request == "help":
             self._sender.send_text(self.help)
         elif self._state == GDDProcessorState.JUST_CREATED:
-            command = re.match(r"(\w+) destination googleDrive", str_request,
+            command = re.match(r"(\w+) destination googleDrive.*", str_request,
                                re.IGNORECASE).group(1)
             if command == "remove":
-                return self._remove_destination(str_request)
+                self._remove_destination(str_request)
+                return True
             else:
                 self._current_destination = GoogleDriveDestination(
                     self._args_provider)
                 self._current_backup_task.add_destination(
                     self._current_destination)
-                self._sender.send_text("Google Drive назначение создано")
                 self._sender.send_text("Введите название: ", end="")
                 self._state = GDDProcessorState.NAMING
         elif self._state == GDDProcessorState.NAMING:
@@ -78,12 +78,13 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
             self._sender.send_text("Вы не задали название")
         else:
             self._current_backup_task.remove_destination(match_res.group(1))
-        return True
 
     def _check_current_destination(self):
+        if self._current_destination is None:
+            return
         if not self._current_destination.ready_to_authorize():
             self._current_backup_task.remove_destination(
-                self._current_destination.title)
+                self._current_destination)
             self._current_destination = None
             self._sender.send_text("Google Drive 'удален', т.к. не был настроен")
 

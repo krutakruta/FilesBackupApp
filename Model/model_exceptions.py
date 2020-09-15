@@ -12,3 +12,7 @@ class GoogleDriveIsNotReadyToAuthorize(Exception):
 
 class ThereIsNoSubPathLikeThatInGoogleDrive(Exception):
     pass
+
+
+class BackupTaskError(Exception):
+    pass

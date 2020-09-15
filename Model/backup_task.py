@@ -1,3 +1,4 @@
+from Model.model_exceptions import BackupTaskError
 from Utilities.useful_functions import check_type_decorator
 from Model.BackupElements.i_backup_element import IBackupElement
 from Model.BackupDestination.i_backup_destination import IBackupDestination
@@ -11,23 +12,35 @@ class BackupTask:
 
     @check_type_decorator(IBackupElement)
     def add_backup_element(self, element):
+        if element in self._backup_elements:
+            raise BackupTaskError(
+                "Backup element with such name already exists")
         self._backup_elements.append(element)
 
     @check_type_decorator(str)
-    def remove_backup_element(self, element_title):
-        self._backup_elements.remove(
-            next(iter([el for el in self._backup_elements
-                       if el.title == element_title])))
+    def remove_backup_element(self, title):
+        try:
+            self._backup_elements.remove(
+                next(iter((el for el in self._backup_elements
+                           if el.title == title))))
+        except StopIteration:
+            raise BackupTaskError("There is no elements with such name")
 
     @check_type_decorator(IBackupDestination)
     def add_destination(self, destination):
+        if destination in self._destination:
+            raise BackupTask(
+                "Backup destination with such name already exists")
         self._destination.append(destination)
 
     @check_type_decorator(str)
-    def remove_destination(self, destination_title):
-        self._destination.remove(
-            next(iter([d for d in self._destination
-                       if d.title == destination_title])))
+    def remove_destination(self, title):
+        try:
+            self._backup_elements.remove(
+                next(iter((d for d in self._destination
+                           if d.title == title))))
+        except StopIteration:
+            raise BackupTaskError("There is no destination with such name")
 
     def launch_backup(self):
         result_log = set()
