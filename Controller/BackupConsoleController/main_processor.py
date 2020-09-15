@@ -49,8 +49,10 @@ class MainProcessor(Processor):
             self._send_tasks_list()
 
         elif match(r"launch backup .+", str_request) is not None:
-            print(self._backup_program_model.launch_backup(
+            self._sender.send_text("Бэкап завершен. Результат:\n\n")
+            self._sender.send_text(self._backup_program_model.launch_backup(
                 match(r"launch backup (.+)", str_request).group(1)))
+            return True
         else:
             self._send_i_dont_understand()
         return False

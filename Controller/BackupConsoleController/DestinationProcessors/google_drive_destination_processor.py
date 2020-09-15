@@ -12,6 +12,7 @@ class GDDProcessorState(Enum):
     CLIENT_ID = 2
     CLIENT_SECRET = 3
     SUB_PATH = 4
+    AUTHORIZED = 5
 
 
 class GoogleDriveDestinationProcessor(BackupProgramProcessor):
@@ -47,6 +48,14 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
         elif self._state == GDDProcessorState.NAMING:
             self._current_destination.title = re.match(r"(.+)", str_request)\
                 .group(1)
+            self._sender.send_text("Введите подпуть(по умолчанию '/'): ",
+                                   end="")
+            self._state = GDDProcessorState.SUB_PATH
+        elif self._state == GDDProcessorState.SUB_PATH:
+            sub_path = re.match(r"(.*)", str_request).group(1)
+            self._current_destination.sub_path =\
+                (sub_path if sub_path != ""
+                 else self._current_destination.sub_path)
             self._sender.send_text("Введите client_id: ", end="")
             self._state = GDDProcessorState.CLIENT_ID
         elif self._state == GDDProcessorState.CLIENT_ID:
@@ -59,7 +68,7 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
                 r"(.+)", str_request).group(1)
             self._current_destination.authorize()
             self._sender.send_text("Вы авторизованы. Google drive добавлен")
-            return True
+            self._state = GDDProcessorState.AUTHORIZED
         return False
 
     def _remove_destination(self, str_request):

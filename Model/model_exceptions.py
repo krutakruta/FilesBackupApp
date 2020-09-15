@@ -8,3 +8,7 @@ class ThereIsNoTaskWithSuchName(Exception):
 
 class GoogleDriveIsNotReadyToAuthorize(Exception):
     pass
+
+
+class ThereIsNoSubPathLikeThatInGoogleDrive(Exception):
+    pass

@@ -2,9 +2,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 from Model.BackupDestination.i_backup_destination import IBackupDestination
-from Model.BackupElements\
+from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
-from Model.model_exceptions import GoogleDriveIsNotReadyToAuthorize
+from Model.model_exceptions import GoogleDriveIsNotReadyToAuthorize,\
+    ThereIsNoSubPathLikeThatInGoogleDrive
 from Utilities.useful_functions import check_type_decorator
 
 
@@ -57,8 +58,40 @@ class GoogleDriveDestination(IBackupDestination):
             return "Не удалось доставить элемент(-ы)," \
                    "т.к. программа не авторизована в google drive"
         except Exception:
-            raise
             return "Неизвестная ошибка в Google Drive destination"
+
+    @staticmethod
+    def get_target_folders_in_google_drive(service, path):
+        path_items = list(filter(lambda f: f != "", path.split("/")))
+        files = service.files().list(
+            q=f"mimeType='application/vnd.google-apps.folder'",
+            fields="files(id, name, parents)"
+        ).execute()
+        if not files or path_items == []:
+            return []
+        folders = files["files"]
+        returned = False
+        for folder in filter(lambda f: f["name"] == path_items[0], folders):
+            target_folder = GoogleDriveDestination.go_through_files_tree(
+                folders, folder, 1, path_items)
+            if target_folder:
+                returned = True
+                yield target_folder
+        else:
+            if not returned:
+                raise ThereIsNoSubPathLikeThatInGoogleDrive()
+
+    @staticmethod
+    def go_through_files_tree(folders, curr_folder, depth, path_items):
+        if depth == len(path_items):
+            return curr_folder
+        for fol in filter(lambda f: (f["name"] == path_items[depth] and
+                                     curr_folder["id"] in f["parents"]),
+                          folders):
+            return GoogleDriveDestination.go_through_files_tree(
+                folders, fol, depth + 1, path_items)
+        else:
+            return None
 
     def _get_all_files_list(self, file_fields):
         files = []

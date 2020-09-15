@@ -16,3 +16,10 @@ def check_type(obj, *expected_types):
         if isinstance(obj, expected_type):
             return
     raise TypeError()
+
+
+def parse_path_and_get_path_sheet(path):
+    split = path.replace("\\", "/").split("/")
+    if len(split) > 1:
+        return split[-1] if split[-1] != "" else split[-2]
+    return split[0]

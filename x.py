@@ -40,6 +40,9 @@ def main():
     results = service.files().list(
         pageSize=30, fields="nextPageToken, files(id, name)").execute()
     items = results.get('files', [])
+    x = service.files().get('0AIeEoT6Js27gUk9PVA').execute()
+    print(x)
+    return
     if not items:
         print('No files found.')
     else:
@@ -55,17 +58,6 @@ def smain():
     d.authorize()
     print(d.xxx())
 
-def ddd():
-    try:
-        media = http.MediaFileUpload(r"C:\Users\Kruta\Desktop\ярлыки\Лекции КА", resumable=True)
-    except (FileNotFoundError, AttributeError, PermissionError):
-        print("файл не найден")
-
-
-def sss():
-    print("sss")
-
 
 if __name__ == '__main__':
-    ddd()
-    sss()
+    main()
