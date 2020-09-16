@@ -4,7 +4,7 @@ from googleapiclient.discovery import build
 from Model.BackupDestination.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
-from Model.model_exceptions import GoogleDriveIsNotReadyToAuthorize,\
+from Model.model_exceptions import NotReadyToAuthorizeError,\
     ThereIsNoSubPathLikeThatInGoogleDrive
 from Utilities.useful_functions import check_type_decorator
 
@@ -17,10 +17,11 @@ class Graph:
 
 
 class GoogleDriveDestination(IBackupDestination):
-    def __init__(self, args_provider, title="GoogleDrive", client_id=None, client_sec=None):
-        self._title = title
+    def __init__(self, args_provider, title="GoogleDrive",
+                 client_id=None, client_sec=None):
+        self.title = title
         self._include_flag = True
-        self._sub_path = "/"
+        self.sub_path = "/"
         self._credentials = self._create_credentials(client_id, client_sec)
         self._scopes = ['https://www.googleapis.com/auth/drive']
         self._service = None
@@ -32,7 +33,7 @@ class GoogleDriveDestination(IBackupDestination):
 
     def authorize(self):
         if not self.ready_to_authorize():
-            raise GoogleDriveIsNotReadyToAuthorize()
+            raise NotReadyToAuthorizeError()
         creds = InstalledAppFlow.from_client_config(
             self._credentials, self._scopes) \
             .run_local_server(port=0)
@@ -54,7 +55,7 @@ class GoogleDriveDestination(IBackupDestination):
                        f"т.к. эта функция для данного элемента не поддерживается"
             return element.backup_to_google_drive(
                 self._service, sub_path=self._sub_path)
-        except GoogleDriveIsNotReadyToAuthorize:
+        except NotReadyToAuthorizeError:
             return "Не удалось доставить элемент(-ы)," \
                    "т.к. программа не авторизована в google drive"
         except Exception:
@@ -143,20 +144,12 @@ class GoogleDriveDestination(IBackupDestination):
         return self._credentials["installed"]["client_secret"]
 
     @property
-    def title(self):
-        return self._title
-
-    @property
     def type_description(self):
         return "Google drive облако"
 
     @property
     def include(self):
         return self._include_flag
-
-    @property
-    def sub_path(self):
-        return self._sub_path
 
     @client_id.setter
     @check_type_decorator(str)
@@ -173,15 +166,6 @@ class GoogleDriveDestination(IBackupDestination):
     def include(self, value):
         self._include_flag = value
 
-    @title.setter
-    @check_type_decorator(str)
-    def title(self, value):
-        self._title = value
-
-    @sub_path.setter
-    @check_type_decorator(str)
-    def sub_path(self, value):
-        self._sub_path = value
 
     def _create_credentials(self, client_id, client_secret):
         return {"installed": {

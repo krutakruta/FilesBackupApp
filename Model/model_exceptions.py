@@ -6,7 +6,7 @@ class ThereIsNoTaskWithSuchName(Exception):
     pass
 
 
-class GoogleDriveIsNotReadyToAuthorize(Exception):
+class NotReadyToAuthorizeError(Exception):
     pass
 
 
@@ -15,4 +15,16 @@ class ThereIsNoSubPathLikeThatInGoogleDrive(Exception):
 
 
 class BackupTaskError(Exception):
+    pass
+
+
+class BadConfirmationCodeError(Exception):
+    pass
+
+
+class BadTokenError(Exception):
+    pass
+
+
+class YandexDiskError(Exception):
     pass

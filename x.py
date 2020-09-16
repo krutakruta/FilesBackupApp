@@ -1,11 +1,32 @@
 import yadisk
+import yandex_oauth
+import webbrowser
+import requests
 
 
 def main():
-    y = yadisk.YaDisk(id="dbb2831b0635426e8e6ce2eb5433a1f7", secret="a0da8ef5868f437a89aa6de798e21980")
-    print(y.get_code_url())
-    y.token = y.get_token(input())
-    print(y.get_disk_info())
+    y = yadisk.YaDisk()
+    y.id = "dbb2831b0635426e8e6ce2eb5433a1f7"
+    y.secret = "a0da8ef5868f437a89aa6de798e21980"
+    webbrowser.open(y.get_code_url(), new=1, autoraise=True)
+    token = y.get_token(code=input())
+    y.token = token["access_token"]
+    for i in y.listdir("/тест", fields=["name", "resource_id", "path"]):
+        print(f"name = {i.name}, path = {i.path}, id = {i.resource_id}")
+
+
+
+    # port = 8080
+    # host = "localhost"
+    # success_message = "крута"
+    # wsgi_app = _RedirectWSGIApp(success_message)
+    # local_server = wsgiref.simple_server.make_server(
+    #     host, port, wsgi_app, handler_class=wsgiref.simple_server.WSGIRequestHandler)
+    # webbrowser.open(y.get_auth_url(type="token"), new=1, autoraise=True)
+    # local_server.handle_request()
+    # authorization_response = wsgi_app.last_request_uri.replace(
+    #     'http', 'https')
+
 
 
 class A:
@@ -14,12 +35,7 @@ class A:
 
 
 if __name__ == "__main__":
-    x = [1, 2, 3]
-    y = next(iter((item for item in x if item == 4)))
-    print(y)
-
-
-
+    main()
 
 
 
@@ -103,7 +119,7 @@ if __name__ == "__main__":
 #
 #
 # def smain():
-#     d = GoogleDriveDestination()
+#     d = GoogleDriveDestination(None)
 #     d.client_id = "577533866445-l9jiqaas7ehmo3uihiffvo83hd499fbf.apps.googleusercontent.com"
 #     d.client_secret = "B4h8o9fXlKYKE_y7RsJJavdd"
 #     d.authorize()
@@ -111,4 +127,4 @@ if __name__ == "__main__":
 #
 #
 # if __name__ == '__main__':
-#     main()
+#     smain()
