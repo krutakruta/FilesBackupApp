@@ -11,6 +11,10 @@ View/ConsoleView/__pycache__/
 Controller/BackupConsoleController/__pycache__/
 Controller/BackupConsoleController/MessageProcessors/__pycache__/
 credentials.json
+
 Model/BackupDestination/__pycache__/google_drive_destination.cpython-36.pyc
+
+Model/BackupDestination/__pycache__/yandex_disk_destination.cpython-36.pyc
+
 x.py
 token.pickle

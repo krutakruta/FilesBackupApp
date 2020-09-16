@@ -10,9 +10,9 @@ def main():
     y.secret = "a0da8ef5868f437a89aa6de798e21980"
     webbrowser.open(y.get_code_url(), new=1, autoraise=True)
     token = y.get_token(code=input())
-    y.token = token["access_token"]
-    for i in y.listdir("/тест", fields=["name", "resource_id", "path"]):
-        print(f"name = {i.name}, path = {i.path}, id = {i.resource_id}")
+
+    y.token = token.get("access_token", None)
+    y.upload(r"C:\Users\Kruta\Desktop\ярлыки\Лекции КА\Lektsia_5.docx", "/Lektsia_5.docx/", overwrite=True)
 
 
 

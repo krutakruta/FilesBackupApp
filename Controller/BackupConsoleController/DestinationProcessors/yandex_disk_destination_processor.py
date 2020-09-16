@@ -1,4 +1,8 @@
 import re
+import webbrowser
+
+import yadisk
+
 from Controller.BackupConsoleController.backup_program_processor import BackupProgramProcessor
 from enum import Enum
 from Model.BackupDestination\
@@ -8,13 +12,14 @@ from Model.model_exceptions import NotReadyToAuthorizeError,\
 
 
 class YDDProcessorState(Enum):
-    JUST_CREATED = 0
-    NAMING = 1
-    SUB_PATH = 2
-    CLIENT_ID = 3
-    CLIENT_SECRET = 4
-    CONFIRMATION_CODE = 5
-    AUTHORIZED = 6
+    ERROR = 0
+    JUST_CREATED = 1
+    NAMING = 2
+    SUB_PATH = 3
+    CLIENT_ID = 4
+    CLIENT_SECRET = 5
+    CONFIRMATION_CODE = 6
+    AUTHORIZED = 7
 
 
 class YandexDiskDestinationProcessor(BackupProgramProcessor):
@@ -41,15 +46,16 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
         elif self._state == YDDProcessorState.SUB_PATH:
             self._handle_sub_path_state(str_request)
         elif self._state == YDDProcessorState.CLIENT_ID:
-            self._handle_just_created_state(str_request)
+            self._handle_client_id_state(str_request)
         elif self._state == YDDProcessorState.CLIENT_SECRET:
             self._handle_client_secret_state(str_request)
         elif self._state == YDDProcessorState.CONFIRMATION_CODE:
             self._handle_confirmation_code_state(str_request)
         elif self._state == YDDProcessorState.AUTHORIZED:
             self._handle_authorized_state(str_request)
-        else:
-            self._sender.send_text("Внутренная ошибка. Введите back")
+        elif self._state == YDDProcessorState.ERROR:
+            self._sender.send_text("Внутренная ошибка")
+            return True
         return False
 
     def _handle_just_created_state(self, str_request):
@@ -87,10 +93,11 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
     def _handle_client_secret_state(self, str_request):
         self._current_destination.client_secret = re.match(
             r"(.*)", str_request).group(1)
-        self._sender.send_text(f"Пройдите по ссылке: "
-                               f"{self._current_destination.get_token_url()}")
+        webbrowser.open(self._current_destination.get_code_url(),
+                        new=1, autoraise=True)
         self._sender.send_text(
             f"Разрешите доступ и введите код подтверждения: ", end="")
+        self._state = YDDProcessorState.CONFIRMATION_CODE
 
     def _handle_confirmation_code_state(self, str_request):
         code = re.match(r"(.*)", str_request).group(1)
@@ -100,19 +107,35 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
             self._state = YDDProcessorState.AUTHORIZED
         except NotReadyToAuthorizeError:
             self._sender.send_text("Не заданы client_id или client_secret")
+            self._state = YDDProcessorState.ERROR
         except BadConfirmationCodeError:
             self._sender.send_text("Неверный код подтверждения")
         except YandexDiskError:
             self._sender.send_text("Yandex Disk: неизвестная ошибка")
+            raise
+            self._state = YDDProcessorState.ERROR
 
     def _handle_authorized_state(self, str_request):
-        if not re.match(r"set sub_path.*", str_request, re.IGNORECASE):
+        if re.match(r"set sub_path.*", str_request, re.IGNORECASE):
             match = re.match(r"set sub_path (.+)", str_request, re.IGNORECASE)
             if match is not None:
                 self._current_destination.sub_path = match.group(1)
             else:
                 self._sender.send_text("Вы не ввели подпуть")
+        elif re.match(r"dirlist.*", str_request) is not None:
+            path = re.match(r"dirlist ?(.*)", str_request).group(1)
+            try:
+                self._send_dirlist("/" if path is None or path == ""
+                                   else path)
+            except yadisk.exceptions.PathNotFoundError:
+                self._sender.send_text("Такого подпути не существует")
         else:
+            self._send_i_dont_understand()
+
+    def _send_dirlist(self, path):
+        for item in self._current_destination.dirlist(path):
+            self._sender.send_text(f"- {item}")
+
 
     def _remove_destination(self, str_request):
         match_res = re.match(r"remove destination yandexdisk (.+)",
@@ -134,4 +157,8 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
 
     @property
     def help(self):
-        pass
+        return """После авторизации
+Список файлов и папок:
+    - dirlist path
+Установить подпуть в yandex disk:
+    - set sub_path path"""

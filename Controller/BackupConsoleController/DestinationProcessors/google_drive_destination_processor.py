@@ -94,4 +94,4 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
 Для авторизации в Google Drive необходимы следующие параметры:
 - client_id
 - client_secret,
-которые предоставляются при включении google drive api"""
+которые предоставляются при подключеннии google drive api"""

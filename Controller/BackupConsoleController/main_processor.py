@@ -77,6 +77,7 @@ class MainProcessor(Processor):
             return False
         self._current_task_to_setup = \
             self._backup_program_model.get_tasks_dict()[task_name]
+        self._sender.send_text(f"Настройки бэкапа {task_name}")
         self._state = CreatingTaskState.SETTING_UP_TASK
 
     def _process_request_setting_up_task_state(self, str_request):
@@ -123,20 +124,21 @@ class MainProcessor(Processor):
         else:
             self._sender.send_text("Список пуст")
 
-
+    # TODO
     @property
     def help(self):
         if self._state == CreatingTaskState.START:
-            return """Создание бэкапа:
-- create task task_name
+            return """
+Создание бэкапа:
+    - create task task_name
 Настройка бэкапа:
-- setup task task_name
+    - setup task task_name
 Удаление бэкапа:
-- delete task task_name
+    - delete task task_name
 Список бэкапов:
-- tasks list
+    - tasks list
 Запустить бэкап:
-- launch backup task_name"""
+    - launch backup task_name"""
         else:
             return """Доступные команды:
 - add/remove file file_name/file_path

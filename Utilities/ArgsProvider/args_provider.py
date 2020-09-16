@@ -1,5 +1,8 @@
 from Controller.BackupConsoleController.BackupElementsProcessors.file_processor import FileProcessor
-from Controller.BackupConsoleController.DestinationProcessors.google_drive_destination_processor import GoogleDriveDestinationProcessor
+from Controller.BackupConsoleController.DestinationProcessors.\
+    google_drive_destination_processor import GoogleDriveDestinationProcessor
+from Controller.BackupConsoleController.DestinationProcessors\
+    .yandex_disk_destination_processor import YandexDiskDestinationProcessor
 from Utilities.ArgsProvider.i_args_provider import IArgsProvider
 
 
@@ -9,7 +12,7 @@ class ArgsProvider(IArgsProvider):
                 self.get_all_destination_processors(*args, **kwargs))
 
     def get_all_destination_processors(self, *args, **kwargs):
-        return [GoogleDriveDestinationProcessor(*args, **kwargs)]
+        return [GoogleDriveDestinationProcessor(*args, **kwargs), YandexDiskDestinationProcessor(*args, **kwargs)]
 
     def get_all_backup_elements_processors(self, *args, **kwargs):
         return [FileProcessor(*args, **kwargs)]
