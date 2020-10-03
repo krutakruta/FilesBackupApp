@@ -20,3 +20,8 @@ class IBackupElement:
     @abstractmethod
     def include_flag(self):
         raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def backup_log(self):
+        raise NotImplementedError()

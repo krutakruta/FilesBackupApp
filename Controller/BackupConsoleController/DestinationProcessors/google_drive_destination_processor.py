@@ -1,6 +1,6 @@
-from Controller.BackupConsoleController\
+from Controller.BackupConsoleController \
     .backup_program_processor import BackupProgramProcessor
-from Model.BackupDestination\
+from Model.BackupDestination \
     .google_drive_destination import GoogleDriveDestination
 from enum import Enum
 import re
@@ -46,14 +46,14 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
                 self._sender.send_text("Введите название: ", end="")
                 self._state = GDDProcessorState.NAMING
         elif self._state == GDDProcessorState.NAMING:
-            self._current_destination.title = re.match(r"(.+)", str_request)\
+            self._current_destination.title = re.match(r"(.+)", str_request) \
                 .group(1)
             self._sender.send_text("Введите подпуть(по умолчанию '/'): ",
                                    end="")
             self._state = GDDProcessorState.SUB_PATH
         elif self._state == GDDProcessorState.SUB_PATH:
             sub_path = re.match(r"(.*)", str_request).group(1)
-            self._current_destination.sub_path =\
+            self._current_destination.sub_path = \
                 (sub_path if sub_path != ""
                  else self._current_destination.sub_path)
             self._sender.send_text("Введите client_id: ", end="")
@@ -69,7 +69,18 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
             self._current_destination.authorize()
             self._sender.send_text("Вы авторизованы. Google drive добавлен")
             self._state = GDDProcessorState.AUTHORIZED
+        elif self._state == GDDProcessorState.AUTHORIZED:
+            return self._process_authorized_state(str_request)
         return False
+
+    def _process_authorized_state(self, str_request):
+        if re.match(r"dirlist", str_request) is not None:
+            self._sender.send_text(
+                "\n".join(self._current_destination.get_all_directories()))
+        elif re.match(r"files_list .+") is not None:
+
+        else:
+            self._sender.send_text("Неправильный запрос. Справка: help")
 
     def _remove_destination(self, str_request):
         match_res = re.match(r"remove destination googleDrive (.+)",
@@ -94,4 +105,6 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
 Для авторизации в Google Drive необходимы следующие параметры:
 - client_id
 - client_secret,
-которые предоставляются при подключеннии google drive api"""
+которые предоставляются при подключеннии google drive api
+Список файлов и папок:
+    - dirlist path"""

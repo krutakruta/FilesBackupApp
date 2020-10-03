@@ -35,7 +35,8 @@ class A:
 
 
 if __name__ == "__main__":
-    main()
+    directories = [["sadf", "tyuio"], ["eeeeeee", "asdsad"]]
+    print("\n".join(map(lambda d: f"/{'/'.join(d)}", directories)))
 
 
 

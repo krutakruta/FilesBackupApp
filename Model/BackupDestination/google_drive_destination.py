@@ -4,7 +4,7 @@ from googleapiclient.discovery import build
 from Model.BackupDestination.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
-from Model.model_exceptions import NotReadyToAuthorizeError,\
+from Model.model_exceptions import NotReadyToAuthorizeError, \
     ThereIsNoSubPathLikeThatInGoogleDrive
 from Utilities.useful_functions import check_type_decorator
 
@@ -19,7 +19,7 @@ class Graph:
 class GoogleDriveDestination(IBackupDestination):
     def __init__(self, args_provider, title="GoogleDrive",
                  client_id=None, client_sec=None):
-        self.title = title
+        self._title = title
         self._include_flag = True
         self.sub_path = "/"
         self._credentials = self._create_credentials(client_id, client_sec)
@@ -46,6 +46,34 @@ class GoogleDriveDestination(IBackupDestination):
                                    ["id", "name", "parents"])))
         raise NotImplementedError()
 
+    def get_all_directories(self):
+        files = self._service.files().list(
+            q=f"mimeType='application/vnd.google-apps.folder'",
+            fields="files(id, name, parents)"
+        ).execute()
+        if files is None:
+            return []
+        folders = files["files"]
+        directories = []
+        for folder in filter(lambda f: "parents" not in f, folders):
+            self._restore_directories(folder, folders, [], directories)
+        return list(map(lambda d:
+                        f"/{'/'.join(map(lambda item: item['name'], d))}/",
+                        directories))
+
+    def _restore_directories(self, curr_folder, folders,
+                             current_directory_elements, directories):
+        current_directory_elements.append(curr_folder)
+        has_children = False
+        for folder in filter(lambda f: "parents" in f and
+                                       curr_folder["id"] in f["parents"],
+                             folders):
+            has_children = True
+            self._restore_directories(
+                folder, folders, [_ for _ in current_directory_elements], directories)
+        if not has_children:
+            directories.append(current_directory_elements)
+
     def deliver_element(self, element):
         try:
             if self._service is None:
@@ -54,7 +82,7 @@ class GoogleDriveDestination(IBackupDestination):
                 return f"Google drive: не удалось доставить {element.title}," \
                        f"т.к. эта функция для данного элемента не поддерживается"
             return element.backup_to_google_drive(
-                self._service, sub_path=self._sub_path)
+                self._service, sub_path=self.sub_path)
         except NotReadyToAuthorizeError:
             return "Не удалось доставить элемент(-ы)," \
                    "т.к. программа не авторизована в google drive"
@@ -62,7 +90,7 @@ class GoogleDriveDestination(IBackupDestination):
             return "Неизвестная ошибка в Google Drive destination"
 
     @staticmethod
-    def get_target_folders_in_google_drive(service, path):
+    def get_target_folders_of_path_in_google_drive(service, path):
         path_items = list(filter(lambda f: f != "", path.split("/")))
         files = service.files().list(
             q=f"mimeType='application/vnd.google-apps.folder'",
@@ -71,28 +99,22 @@ class GoogleDriveDestination(IBackupDestination):
         if not files or path_items == []:
             return []
         folders = files["files"]
-        returned = False
+        target_folders = []
         for folder in filter(lambda f: f["name"] == path_items[0], folders):
-            target_folder = GoogleDriveDestination.go_through_files_tree(
-                folders, folder, 1, path_items)
-            if target_folder:
-                returned = True
-                yield target_folder
-        else:
-            if not returned:
-                raise ThereIsNoSubPathLikeThatInGoogleDrive()
+            GoogleDriveDestination.find_target_folders(
+                folders, folder, 1, path_items, target_folders)
+        if not target_folders:
+            raise ThereIsNoSubPathLikeThatInGoogleDrive()
 
     @staticmethod
-    def go_through_files_tree(folders, curr_folder, depth, path_items):
+    def find_target_folders(folders, curr_folder, depth, path_items, target_folders):
         if depth == len(path_items):
-            return curr_folder
+            target_folders.append(curr_folder)
         for fol in filter(lambda f: (f["name"] == path_items[depth] and
                                      curr_folder["id"] in f["parents"]),
                           folders):
-            return GoogleDriveDestination.go_through_files_tree(
+            GoogleDriveDestination.find_target_folders(
                 folders, fol, depth + 1, path_items)
-        else:
-            return None
 
     def _get_all_files_list(self, file_fields):
         files = []
@@ -151,6 +173,10 @@ class GoogleDriveDestination(IBackupDestination):
     def include(self):
         return self._include_flag
 
+    @property
+    def title(self):
+        return self._title
+
     @client_id.setter
     @check_type_decorator(str)
     def client_id(self, value):
@@ -166,6 +192,10 @@ class GoogleDriveDestination(IBackupDestination):
     def include(self, value):
         self._include_flag = value
 
+    @title.setter
+    @check_type_decorator(str)
+    def title(self, value):
+        self._title = value
 
     def _create_credentials(self, client_id, client_secret):
         return {"installed": {
