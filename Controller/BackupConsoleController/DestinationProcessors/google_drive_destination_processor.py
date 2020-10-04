@@ -74,11 +74,21 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
         return False
 
     def _process_authorized_state(self, str_request):
-        if re.match(r"dirlist", str_request) is not None:
+        if re.match(r"directories", str_request) is not None:
             self._sender.send_text(
                 "\n".join(self._current_destination.get_all_directories()))
-        elif re.match(r"files_list .+") is not None:
-
+        elif re.match(r"dirlist .+", str_request) is not None:
+            content_dict = self._current_destination.\
+                get_directory_content_dict_id_files(
+                    re.match(r"dirlist (.+)", str_request).group(1))
+            if not content_dict:
+                self._sender.send_text("Такого подпути не существует")
+            else:
+                self._sender.send_text("По вашему запросу найдено следующее:")
+                for folder_id in content_dict.keys():
+                    self._sender.send_text(f"Папка с id {folder_id}")
+                    for item in content_dict[folder_id]:
+                        self._sender.send_text(f"- {item['name']}")
         else:
             self._sender.send_text("Неправильный запрос. Справка: help")
 
@@ -106,5 +116,10 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
 - client_id
 - client_secret,
 которые предоставляются при подключеннии google drive api
-Список файлов и папок:
-    - dirlist path"""
+
+После авторизации:
+    Псевдограф каталогов:
+        - directories
+    Список файлов и каталогов по указанному пути('/' - корень):
+        - dirlist path"""
+

@@ -1,12 +1,12 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 
 from Model.BackupDestination.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
 from Model.model_exceptions import NotReadyToAuthorizeError, \
     ThereIsNoSubPathLikeThatInGoogleDrive
-from Utilities.useful_functions import check_type_decorator
+from Utilities.useful_functions import check_type_decorator, split_path
 
 
 class Graph:
@@ -39,12 +39,31 @@ class GoogleDriveDestination(IBackupDestination):
             .run_local_server(port=0)
         self._service = build("drive", "v3", credentials=creds)
 
-    def get_directory_content_list(self, directory):
-        if directory == "/":
-            return list(filter(lambda file: "parents" not in file,
-                               self._get_all_files_list(
-                                   ["id", "name", "parents"])))
-        raise NotImplementedError()
+    @check_type_decorator(Resource)
+    def set_google_service(self, service):
+        self._service = service
+
+    def get_directory_content_dict_id_files(self, path):
+        try:
+            if path == "/":
+                return {"корневой каталог":
+                            list(filter(lambda file: "parents" not in file,
+                                        self._get_all_files_list(
+                                            ["id", "name", "parents"])))}
+            target_folders = GoogleDriveDestination. \
+                get_target_folders_of_not_root_path_in_google_drive(
+                self._service, path)
+            files = {}
+            for folder in target_folders:
+                files[folder["id"]] = []
+                response = self._service.files().list(
+                    q=f"'{folder['id']}' in parents", fields="files(id, name)"
+                ).execute()
+                if response:
+                    files[folder["id"]] += response["files"]
+            return files
+        except ThereIsNoSubPathLikeThatInGoogleDrive:
+            return {}
 
     def get_all_directories(self):
         files = self._service.files().list(
@@ -90,8 +109,10 @@ class GoogleDriveDestination(IBackupDestination):
             return "Неизвестная ошибка в Google Drive destination"
 
     @staticmethod
-    def get_target_folders_of_path_in_google_drive(service, path):
-        path_items = list(filter(lambda f: f != "", path.split("/")))
+    def get_target_folders_of_not_root_path_in_google_drive(service, path):
+        path_items = split_path(path)
+        if not path_items:
+            raise ValueError()
         files = service.files().list(
             q=f"mimeType='application/vnd.google-apps.folder'",
             fields="files(id, name, parents)"
@@ -101,20 +122,23 @@ class GoogleDriveDestination(IBackupDestination):
         folders = files["files"]
         target_folders = []
         for folder in filter(lambda f: f["name"] == path_items[0], folders):
-            GoogleDriveDestination.find_target_folders(
+            GoogleDriveDestination._find_target_folders(
                 folders, folder, 1, path_items, target_folders)
         if not target_folders:
             raise ThereIsNoSubPathLikeThatInGoogleDrive()
+        return target_folders
 
     @staticmethod
-    def find_target_folders(folders, curr_folder, depth, path_items, target_folders):
+    def _find_target_folders(folders, curr_folder,
+                             depth, path_items, target_folders):
         if depth == len(path_items):
             target_folders.append(curr_folder)
+            return
         for fol in filter(lambda f: (f["name"] == path_items[depth] and
                                      curr_folder["id"] in f["parents"]),
                           folders):
-            GoogleDriveDestination.find_target_folders(
-                folders, fol, depth + 1, path_items)
+            GoogleDriveDestination._find_target_folders(
+                folders, fol, depth + 1, path_items, target_folders)
 
     def _get_all_files_list(self, file_fields):
         files = []

@@ -35,8 +35,9 @@ class A:
 
 
 if __name__ == "__main__":
-    directories = [["sadf", "tyuio"], ["eeeeeee", "asdsad"]]
-    print("\n".join(map(lambda d: f"/{'/'.join(d)}", directories)))
+    path = {"a": 2, "b": 3}
+    for i in path.keys():
+        print(i)
 
 
 

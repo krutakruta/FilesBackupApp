@@ -25,8 +25,6 @@ class MainProcessor(Processor):
     def process_request(self, str_request):
         if str_request == "exit":
             return True
-        elif str_request == "help":
-            self._sender.send_text(self.help)
         elif self._state == CreatingTaskState.START:
             self._process_request_start_state(str_request)
         elif self._state == CreatingTaskState.SETTING_UP_TASK:
@@ -34,7 +32,10 @@ class MainProcessor(Processor):
         return False
 
     def _process_request_start_state(self, str_request):
-        if match(r"create task .+", str_request) is not None:
+        if str_request == "help":
+            self._sender.send_text(self.help)
+
+        elif match(r"create task .+", str_request) is not None:
             self._create_task(match(r"create task (.+)", str_request)
                               .group(1))
 

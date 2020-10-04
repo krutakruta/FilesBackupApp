@@ -136,7 +136,6 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
         for item in self._current_destination.dirlist(path):
             self._sender.send_text(f"- {item}")
 
-
     def _remove_destination(self, str_request):
         match_res = re.match(r"remove destination yandexdisk (.+)",
                              str_request, re.IGNORECASE)

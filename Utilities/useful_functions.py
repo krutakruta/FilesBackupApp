@@ -23,3 +23,8 @@ def parse_path_and_get_path_sheet(path):
     if len(split) > 1:
         return split[-1] if split[-1] != "" else split[-2]
     return split[0]
+
+
+def split_path(path):
+    return list(filter(lambda item: item != "",
+                       path.replace("\\", "/").split("/")))

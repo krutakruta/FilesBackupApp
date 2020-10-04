@@ -45,7 +45,7 @@ class FileBackupElement(IBackupElement, IGoogleDriveBackupable,
         try:
             target_folders_id = list(
                 map(lambda folder: folder["id"],
-                    GoogleDriveDestination.get_target_folders_of_path_in_google_drive(
+                    GoogleDriveDestination.get_target_folders_of_not_root_path_in_google_drive(
                         google_service, sub_path)))
             file_metadata = {
                 "name": parse_path_and_get_path_sheet(self._file_path),
