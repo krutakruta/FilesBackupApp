@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import yadisk
 import yandex_oauth
 import webbrowser
@@ -28,16 +30,29 @@ def main():
     #     'http', 'https')
 
 
+class C:
+    """Documentation"""
+    @abstractmethod
+    def title(self):
+        print("C")
 
-class A:
+
+class B:
+    @abstractmethod
+    def title(self):
+        print("B")
+
+
+class A(B, C):
+    def title(self):
+        pass
+
     def __init__(self):
         self.a = "sss"
 
 
 if __name__ == "__main__":
-    path = {"a": 2, "b": 3}
-    for i in path.keys():
-        print(i)
+    print(C.__doc__)
 
 
 
@@ -73,7 +88,7 @@ if __name__ == "__main__":
 # from googleapiclient.http import MediaFileUpload
 # from google_auth_oauthlib.flow import InstalledAppFlow
 # from google.auth.transport.requests import Request
-# from Model.BackupDestination.google_drive_destination import GoogleDriveDestination
+# from Model.Clouds.google_drive_destination import GoogleDriveDestination
 #
 #
 # # If modifying these scopes, delete the file token.pickle.

@@ -1,6 +1,6 @@
 import re
 
-from Model.BackupDestination.google_drive_destination import GoogleDriveDestination
+from Model.Clouds.google_drive_cloud import GoogleDriveCloud
 from Model.BackupElements.i_backup_element import IBackupElement
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
@@ -45,7 +45,7 @@ class FileBackupElement(IBackupElement, IGoogleDriveBackupable,
         try:
             target_folders_id = list(
                 map(lambda folder: folder["id"],
-                    GoogleDriveDestination.get_target_folders_of_not_root_path_in_google_drive(
+                    GoogleDriveCloud.get_target_folders_of_not_root_path_in_google_drive(
                         google_service, sub_path)))
             file_metadata = {
                 "name": parse_path_and_get_path_sheet(self._file_path),

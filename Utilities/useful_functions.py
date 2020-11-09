@@ -28,3 +28,10 @@ def parse_path_and_get_path_sheet(path):
 def split_path(path):
     return list(filter(lambda item: item != "",
                        path.replace("\\", "/").split("/")))
+
+def process_req_and_remove_sub_proc_if_its_finished(
+        str_request, processor, remove_processor):
+    finished = processor.process_request(str_request)
+    if finished:
+        remove_processor()
+    return finished

@@ -1,7 +1,7 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 
-from Model.BackupDestination.i_backup_destination import IBackupDestination
+from Model.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
 from Model.model_exceptions import NotReadyToAuthorizeError, \
@@ -16,12 +16,12 @@ class Graph:
         self.children = []
 
 
-class GoogleDriveDestination(IBackupDestination):
+class GoogleDriveCloud(IBackupDestination):
     def __init__(self, args_provider, title="GoogleDrive",
                  client_id=None, client_sec=None):
         self._title = title
         self._include_flag = True
-        self.sub_path = "/"
+        self._sub_paths = ["/"]
         self._credentials = self._create_credentials(client_id, client_sec)
         self._scopes = ['https://www.googleapis.com/auth/drive']
         self._service = None
@@ -50,7 +50,7 @@ class GoogleDriveDestination(IBackupDestination):
                             list(filter(lambda file: "parents" not in file,
                                         self._get_all_files_list(
                                             ["id", "name", "parents"])))}
-            target_folders = GoogleDriveDestination. \
+            target_folders = GoogleDriveCloud. \
                 get_target_folders_of_not_root_path_in_google_drive(
                 self._service, path)
             files = {}
@@ -100,8 +100,11 @@ class GoogleDriveDestination(IBackupDestination):
             if not isinstance(element, IGoogleDriveBackupable):
                 return f"Google drive: не удалось доставить {element.title}," \
                        f"т.к. эта функция для данного элемента не поддерживается"
-            return element.backup_to_google_drive(
-                self._service, sub_path=self.sub_path)
+            backup_result = []
+            for sub_path in self._sub_paths:
+                backup_result.append(element.backup_to_google_drive(
+                    self._service, sub_path=sub_path))
+            return "\n".join(backup_result)
         except NotReadyToAuthorizeError:
             return "Не удалось доставить элемент(-ы)," \
                    "т.к. программа не авторизована в google drive"
@@ -122,7 +125,7 @@ class GoogleDriveDestination(IBackupDestination):
         folders = files["files"]
         target_folders = []
         for folder in filter(lambda f: f["name"] == path_items[0], folders):
-            GoogleDriveDestination._find_target_folders(
+            GoogleDriveCloud._find_target_folders(
                 folders, folder, 1, path_items, target_folders)
         if not target_folders:
             raise ThereIsNoSubPathLikeThatInGoogleDrive()
@@ -137,7 +140,7 @@ class GoogleDriveDestination(IBackupDestination):
         for fol in filter(lambda f: (f["name"] == path_items[depth] and
                                      curr_folder["id"] in f["parents"]),
                           folders):
-            GoogleDriveDestination._find_target_folders(
+            GoogleDriveCloud._find_target_folders(
                 folders, fol, depth + 1, path_items, target_folders)
 
     def _get_all_files_list(self, file_fields):
@@ -190,7 +193,7 @@ class GoogleDriveDestination(IBackupDestination):
         return self._credentials["installed"]["client_secret"]
 
     @property
-    def type_description(self):
+    def description(self):
         return "Google drive облако"
 
     @property
@@ -200,6 +203,12 @@ class GoogleDriveDestination(IBackupDestination):
     @property
     def title(self):
         return self._title
+
+    def add_sub_path(self, sub_path):
+        self._sub_paths.append(sub_path)
+
+    def remove_sub_path(self, sub_path):
+        self._sub_paths.remove(sub_path)
 
     @client_id.setter
     @check_type_decorator(str)

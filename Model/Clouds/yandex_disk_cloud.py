@@ -1,17 +1,17 @@
 import yadisk
-from Model.BackupDestination.i_backup_destination import IBackupDestination
+from Model.i_backup_destination import IBackupDestination
 from Model.BackupElements.i_yandex_disk_backupable import IYandexDiskBackupable
 from Model.model_exceptions import YandexDiskError, BadConfirmationCodeError, \
     NotReadyToAuthorizeError
 from Utilities.useful_functions import check_type_decorator
 
 
-class YandexDiskDestination(IBackupDestination):
+class YandexDiskCloud(IBackupDestination):
     def __init__(self, args_provider, title="YandexDisk"):
         self._args_provider = args_provider
         self._title = title
         self._include_flag = True
-        self.sub_path = "/"
+        self._sub_paths = ["/"]
         self._service = yadisk.YaDisk()
 
     def authorize(self, confirmation_code):
@@ -44,7 +44,11 @@ class YandexDiskDestination(IBackupDestination):
             if not isinstance(element, IYandexDiskBackupable):
                 return f"Yandex disk: не удалось доставить {element.title}," \
                        f"т.к. эта функция для данного элемента не поддерживается"
-            return element.backup_to_yandex_disk(self._service, self.sub_path)
+            backup_result = []
+            for sub_path in self._sub_paths:
+                backup_result.append(element.backup_to_yandex_disk(
+                    self._service, sub_path))
+            return "\n".join(backup_result)
         except Exception:
             return "Неизвестная ошибка в Yandex Disk destination"
 
@@ -53,12 +57,19 @@ class YandexDiskDestination(IBackupDestination):
         return self._title
 
     @property
-    def type_description(self):
+    def description(self):
         return "Yandex Disk облако"
 
     @property
     def include(self):
         return self._include_flag
+
+    @check_type_decorator(str)
+    def add_sub_path(self, sub_path):
+        self._sub_paths.append(sub_path)
+
+    def remove_sub_path(self, sub_path):
+        self._sub_paths.remove(sub_path)
 
     @property
     def client_id(self):

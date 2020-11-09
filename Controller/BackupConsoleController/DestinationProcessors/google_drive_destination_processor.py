@@ -1,125 +1,50 @@
-from Controller.BackupConsoleController \
-    .backup_program_processor import BackupProgramProcessor
-from Model.BackupDestination \
-    .google_drive_destination import GoogleDriveDestination
-from enum import Enum
 import re
+from Controller.BackupConsoleController.backup_program_processor \
+    import BackupProgramProcessor
+from Controller.BackupConsoleController.google_drive_processor \
+    import GoogleDriveProcessor
+from Model.Clouds.google_drive_cloud import GoogleDriveCloud
+from enum import Enum
 
 
 class GDDProcessorState(Enum):
-    JUST_CREATED = 0
+    START = 0
     NAMING = 1
-    CLIENT_ID = 2
-    CLIENT_SECRET = 3
-    SUB_PATH = 4
-    AUTHORIZED = 5
+    SETUP_GOOGLE_DRIVE = 2
 
 
 class GoogleDriveDestinationProcessor(BackupProgramProcessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._current_destination = None
-        self._state = GDDProcessorState.JUST_CREATED
+        self._current_destination = GoogleDriveCloud(self._args_provider)
+        self._state = GDDProcessorState.START
+        self._google_drive_processor = GoogleDriveProcessor(
+            self._sender, self._args_provider, self._current_destination)
 
     def fit_for_request(self, str_request):
-        return re.match(r"add destination googleDrive|"
-                        r"remove destination googleDrive.*",
-                        str_request, re.IGNORECASE) is not None
+        return re.match(r"googleDrive", str_request, re.IGNORECASE)\
+               is not None
 
     def process_request(self, str_request):
-        if str_request == "back":
-            self._check_current_destination()
-            return True
-        elif str_request == "help":
-            self._sender.send_text(self.help)
-        elif self._state == GDDProcessorState.JUST_CREATED:
-            command = re.match(r"(\w+) destination googleDrive.*", str_request,
-                               re.IGNORECASE).group(1)
-            if command == "remove":
-                self._remove_destination(str_request)
-                return True
-            else:
-                self._current_destination = GoogleDriveDestination(
-                    self._args_provider)
-                self._current_backup_task.add_destination(
-                    self._current_destination)
-                self._sender.send_text("Введите название: ", end="")
-                self._state = GDDProcessorState.NAMING
-        elif self._state == GDDProcessorState.NAMING:
-            self._current_destination.title = re.match(r"(.+)", str_request) \
-                .group(1)
-            self._sender.send_text("Введите подпуть(по умолчанию '/'): ",
-                                   end="")
-            self._state = GDDProcessorState.SUB_PATH
-        elif self._state == GDDProcessorState.SUB_PATH:
-            sub_path = re.match(r"(.*)", str_request).group(1)
-            self._current_destination.sub_path = \
-                (sub_path if sub_path != ""
-                 else self._current_destination.sub_path)
-            self._sender.send_text("Введите client_id: ", end="")
-            self._state = GDDProcessorState.CLIENT_ID
-        elif self._state == GDDProcessorState.CLIENT_ID:
-            self._current_destination.client_id = re.match(
-                r"(.+)", str_request).group(1)
-            self._sender.send_text("Введите client_secret: ", end="")
-            self._state = GDDProcessorState.CLIENT_SECRET
-        elif self._state == GDDProcessorState.CLIENT_SECRET:
-            self._current_destination.client_secret = re.match(
-                r"(.+)", str_request).group(1)
-            self._current_destination.authorize()
-            self._sender.send_text("Вы авторизованы. Google drive добавлен")
-            self._state = GDDProcessorState.AUTHORIZED
-        elif self._state == GDDProcessorState.AUTHORIZED:
-            return self._process_authorized_state(str_request)
-        return False
-
-    def _process_authorized_state(self, str_request):
-        if re.match(r"directories", str_request) is not None:
+        if (self._state == GDDProcessorState.START and
+                str_request == "googleDrive"):
+            self._current_task.add_destination(self._current_destination)
             self._sender.send_text(
-                "\n".join(self._current_destination.get_all_directories()))
-        elif re.match(r"dirlist .+", str_request) is not None:
-            content_dict = self._current_destination.\
-                get_directory_content_dict_id_files(
-                    re.match(r"dirlist (.+)", str_request).group(1))
-            if not content_dict:
-                self._sender.send_text("Такого подпути не существует")
-            else:
-                self._sender.send_text("По вашему запросу найдено следующее:")
-                for folder_id in content_dict.keys():
-                    self._sender.send_text(f"Папка с id {folder_id}")
-                    for item in content_dict[folder_id]:
-                        self._sender.send_text(f"- {item['name']}")
-        else:
-            self._sender.send_text("Неправильный запрос. Справка: help")
+                "Настройка googleDrive destination\n"
+                "Введите название: ", end="")
+            self._state = GDDProcessorState.NAMING
+        elif self._state == GDDProcessorState.NAMING:
+            self._current_destination.title = str_request
+            self._sender.send_text("Авторизация в google drive")
+            self._google_drive_processor.process_request("start")
+            self._state = GDDProcessorState.SETUP_GOOGLE_DRIVE
+        elif self._state == GDDProcessorState.SETUP_GOOGLE_DRIVE:
+            if
 
-    def _remove_destination(self, str_request):
-        match_res = re.match(r"remove destination googleDrive (.+)",
-                             str_request, re.IGNORECASE)
-        if match_res is None:
-            self._sender.send_text("Вы не задали название")
-        else:
-            self._current_backup_task.remove_destination(match_res.group(1))
 
-    def _check_current_destination(self):
-        if self._current_destination is None:
-            return
-        if not self._current_destination.ready_to_authorize():
-            self._current_backup_task.remove_destination(
-                self._current_destination)
-            self._current_destination = None
-            self._sender.send_text("Google Drive 'удален', т.к. не был настроен")
+    def is_finished(self):
+        return True
 
     @property
     def help(self):
-        return """
-Для авторизации в Google Drive необходимы следующие параметры:
-- client_id
-- client_secret,
-которые предоставляются при подключеннии google drive api
-
-После авторизации:
-    Псевдограф каталогов:
-        - directories
-    Список файлов и каталогов по указанному пути('/' - корень):
-        - dirlist path"""
-
+        pass

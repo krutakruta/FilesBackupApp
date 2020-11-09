@@ -20,12 +20,12 @@ class FileProcessor(BackupProgramProcessor):
             if path_match is None:
                 self._sender.send_text("Вы не задали имя файла")
                 return False
-            self._current_backup_task.add_backup_element(
+            self._current_task.add_backup_element(
                 FileBackupElement(path_match.group(1)))
             self._sender.send_text("Файл добавлен")
             return True
         elif command == "remove":
-            self._current_backup_task.remove_backup_element(
+            self._current_task.remove_backup_element(
                 path_match.group(1))
             return True
         else:

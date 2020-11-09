@@ -1,7 +1,7 @@
 from Model.model_exceptions import BackupTaskError
 from Utilities.useful_functions import check_type_decorator
 from Model.BackupElements.i_backup_element import IBackupElement
-from Model.BackupDestination.i_backup_destination import IBackupDestination
+from Model.i_backup_destination import IBackupDestination
 
 
 class BackupTask:

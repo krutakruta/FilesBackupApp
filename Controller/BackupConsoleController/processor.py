@@ -10,6 +10,10 @@ class Processor:
     def process_request(self, str_request):
         raise NotImplementedError()
 
+    @abstractmethod
+    def is_finished(self):
+        raise NotImplementedError()
+
     @property
     @abstractmethod
     def help(self):
