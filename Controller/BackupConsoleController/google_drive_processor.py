@@ -1,8 +1,10 @@
-from Controller.BackupConsoleController.processor import Processor
-from Model.Clouds \
-    .google_drive_cloud import GoogleDriveCloud
-from enum import Enum
 import re
+from enum import Enum
+from Controller.BackupConsoleController.processor import Processor
+from Model.Clouds.google_drive_cloud \
+    import GoogleDriveCloud
+from Model.model_exceptions import InvalidClientError, InvalidAuthCodeError,\
+    GoogleDriveError
 
 
 class GDProcessorState(Enum):
@@ -45,11 +47,24 @@ class GoogleDriveProcessor(Processor):
         self._state = GDProcessorState.CLIENT_SECRET
 
     def _handle_client_secret_state(self, str_request):
-        self._google_drive_model.client_secret = re.match(
-            r"(.+)", str_request).group(1)
-        self._google_drive_model.authorize()
-        self._sender.send_text("Вы авторизованы. Google drive добавлен")
-        self._state = GDProcessorState.AUTHORIZED
+        try:
+            self._google_drive_model.client_secret = re.match(
+                r"(.+)", str_request).group(1)
+            self._google_drive_model.authorize()
+        except InvalidClientError:
+            self._sender.send_text("Неверные client_id или client_secret")
+            self._state = GDProcessorState.START
+            self.process_request("start")
+        except InvalidAuthCodeError:
+            self._sender.send_text("Неверный код подтверждения")
+            self._state = GDProcessorState.START
+            self.process_request("start")
+        except Exception:
+            self._sender.send_text("Неизвестная ошибка")
+            raise GoogleDriveError()
+        else:
+            self._sender.send_text("Вы авторизованы. Google drive добавлен")
+            self._state = GDProcessorState.AUTHORIZED
 
     def _handle_authorized_state(self, str_request):
         if re.match(r"directories", str_request) is not None:

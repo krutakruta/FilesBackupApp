@@ -14,18 +14,19 @@ class ThereIsNoSubPathLikeThatInGoogleDrive(Exception):
     pass
 
 
-
-
-
 class BackupTaskError(Exception):
     pass
 
 
-class BadConfirmationCodeError(Exception):
+class InvalidAuthCodeError(Exception):
     pass
 
 
-class BadTokenError(Exception):
+class InvalidClientError(Exception):
+    pass
+
+
+class GoogleDriveError(Exception):
     pass
 
 

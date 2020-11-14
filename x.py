@@ -1,66 +1,69 @@
-from abc import abstractmethod
+import pickle
+import os.path
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from Model.Clouds.google_drive_cloud import GoogleDriveCloud
 
-import yadisk
-import yandex_oauth
-import webbrowser
-import requests
+
+# If modifying these scopes, delete the file token.pickle.
+SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 
 
 def main():
-    y = yadisk.YaDisk()
-    y.id = "dbb2831b0635426e8e6ce2eb5433a1f7"
-    y.secret = "a0da8ef5868f437a89aa6de798e21980"
-    webbrowser.open(y.get_code_url(), new=1, autoraise=True)
-    token = y.get_token(code=input())
+    """Shows basic usage of the Drive v3 API.
+    Prints the names and ids of the first 10 files the user has access to.
+    """
+    creds = None
+    # The file token.pickle stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
+            creds = flow.run_console(f"Перейдите по ссылке для авторизации: {flow.authorization_url()[0]}",
+                                     "Введите код авторизации: ")
+        # Save the credentials for the next run
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
 
-    y.token = token.get("access_token", None)
-    y.upload(r"C:\Users\Kruta\Desktop\ярлыки\Лекции КА\Lektsia_5.docx", "/Lektsia_5.docx/", overwrite=True)
+    service = build('drive', 'v3', credentials=creds)
 
-
-
-    # port = 8080
-    # host = "localhost"
-    # success_message = "крута"
-    # wsgi_app = _RedirectWSGIApp(success_message)
-    # local_server = wsgiref.simple_server.make_server(
-    #     host, port, wsgi_app, handler_class=wsgiref.simple_server.WSGIRequestHandler)
-    # webbrowser.open(y.get_auth_url(type="token"), new=1, autoraise=True)
-    # local_server.handle_request()
-    # authorization_response = wsgi_app.last_request_uri.replace(
-    #     'http', 'https')
-
-
-class C:
-    """Documentation"""
-    @abstractmethod
-    def title(self):
-        print("C")
-
-
-class B:
-    @abstractmethod
-    def title(self):
-        print("B")
-
-
-class A(B, C):
-    def title(self):
-        pass
-
-    def __init__(self):
-        self.a = "sss"
+    # Call the Drive v3 API
+    results = service.files().list(
+        pageSize=30, fields="nextPageToken, files(id, name)").execute()
+    items = results.get('files', [])
+    x = service.files().get('0AIeEoT6Js27gUk9PVA').execute()
+    print(x)
+    return
+    if not items:
+        print('No files found.')
+    else:
+        print('Files:')
+        for item in items:
+            print(u'{0} ({1})'.format(item['name'], item['id']))
 
 
-if __name__ == "__main__":
-    print(C.__doc__)
+def smain():
+    d = GoogleDriveCloud(None)
+    d.client_id = "57753386d6445-l9jiqaas7ehmo3uihiffvo83hd499fbf.apps.googleusercontent.com"
+    d.client_secret = "B4h8o9fXlKYKE_y7RsJJavdd"
+    d.authorize()
+    print(d.xxx())
 
 
-
-
-
-
-
-
+if __name__ == '__main__':
+    x = input()
+    print(f"x={x}-")
+    #main()
 
 
 
@@ -82,66 +85,5 @@ if __name__ == "__main__":
 
 
 
-# import pickle
-# import os.path
-# from googleapiclient.discovery import build
-# from googleapiclient.http import MediaFileUpload
-# from google_auth_oauthlib.flow import InstalledAppFlow
-# from google.auth.transport.requests import Request
-# from Model.Clouds.google_drive_destination import GoogleDriveDestination
-#
-#
-# # If modifying these scopes, delete the file token.pickle.
-# SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
-#
-#
-# def main():
-#     """Shows basic usage of the Drive v3 API.
-#     Prints the names and ids of the first 10 files the user has access to.
-#     """
-#     creds = None
-#     # The file token.pickle stores the user's access and refresh tokens, and is
-#     # created automatically when the authorization flow completes for the first
-#     # time.
-#     if os.path.exists('token.pickle'):
-#         with open('token.pickle', 'rb') as token:
-#             creds = pickle.load(token)
-#     # If there are no (valid) credentials available, let the user log in.
-#     if not creds or not creds.valid:
-#         if creds and creds.expired and creds.refresh_token:
-#             creds.refresh(Request())
-#         else:
-#             flow = InstalledAppFlow.from_client_secrets_file(
-#                 'credentials.json', SCOPES)
-#             creds = flow.run_local_server(port=0)
-#         # Save the credentials for the next run
-#         with open('token.pickle', 'wb') as token:
-#             pickle.dump(creds, token)
-#
-#     service = build('drive', 'v3', credentials=creds)
-#
-#     # Call the Drive v3 API
-#     results = service.files().list(
-#         pageSize=30, fields="nextPageToken, files(id, name)").execute()
-#     items = results.get('files', [])
-#     x = service.files().get('0AIeEoT6Js27gUk9PVA').execute()
-#     print(x)
-#     return
-#     if not items:
-#         print('No files found.')
-#     else:
-#         print('Files:')
-#         for item in items:
-#             print(u'{0} ({1})'.format(item['name'], item['id']))
-#
-#
-# def smain():
-#     d = GoogleDriveDestination(None)
-#     d.client_id = "577533866445-l9jiqaas7ehmo3uihiffvo83hd499fbf.apps.googleusercontent.com"
-#     d.client_secret = "B4h8o9fXlKYKE_y7RsJJavdd"
-#     d.authorize()
-#     print(d.xxx())
-#
-#
-# if __name__ == '__main__':
-#     smain()
+
+

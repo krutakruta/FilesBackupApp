@@ -82,7 +82,7 @@ class MainProcessor(Processor):
 
     def _setup_task(self, task_name):
         if task_name not in self._backup_program_model.get_tasks_dict():
-            self._sender.send_text("Такого бэкапа не существует")
+            self._sender.send_text("Такого таска не существует")
             return False
         self._current_task_to_setup = \
             self._backup_program_model.get_tasks_dict()[task_name]
@@ -94,7 +94,7 @@ class MainProcessor(Processor):
             return process_req_and_remove_sub_proc_if_its_finished(
                 str_request, self._current_setup_processor,
                 self._remove_setting_up_subproc)
-        for processor in self._args_provider.get_all_setting_up_processors(
+        for processor in self._args_provider.get_all_setup_processors(
                 current_backup_task=self._current_task_to_setup,
                 sender=self._sender,
                 args_provider=self._args_provider):

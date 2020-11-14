@@ -1,12 +1,19 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
+from oauthlib.oauth2.rfc6749 import errors as google_drive_errors
 
 from Model.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
 from Model.model_exceptions import NotReadyToAuthorizeError, \
-    ThereIsNoSubPathLikeThatInGoogleDrive
+    ThereIsNoSubPathLikeThatInGoogleDrive, InvalidClientError,\
+    InvalidAuthCodeError
 from Utilities.useful_functions import check_type_decorator, split_path
+
+
+AUTHORIZATION_PROMPT_MESSAGE = "Перейдите по ссылке для авторизации"
+DEFAULT_AUTH_CODE_MESSAGE = "Введите полученный код"
+REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob"
 
 
 class Graph:
@@ -27,17 +34,28 @@ class GoogleDriveCloud(IBackupDestination):
         self._service = None
         self._args_provider = args_provider
 
-    def ready_to_authorize(self):
+    def is_ready_to_authorize(self):
         return (self._credentials["installed"]["client_id"] and
                 self._credentials["installed"]["client_secret"])
 
-    def authorize(self):
-        if not self.ready_to_authorize():
-            raise NotReadyToAuthorizeError()
-        creds = InstalledAppFlow.from_client_config(
-            self._credentials, self._scopes) \
-            .run_local_server(port=0)
-        self._service = build("drive", "v3", credentials=creds)
+    def authorize(
+            self, authorization_prompt_message=AUTHORIZATION_PROMPT_MESSAGE,
+            authorization_code_message=DEFAULT_AUTH_CODE_MESSAGE):
+        try:
+            if not self.is_ready_to_authorize():
+                raise NotReadyToAuthorizeError()
+            creds = InstalledAppFlow.from_client_config(
+                self._credentials, self._scopes, redirect_uri=REDIRECT_URI) \
+                .run_console(authorization_prompt_message,
+                             authorization_code_message)
+            self._service = build("drive", "v3", credentials=creds)
+        except google_drive_errors.InvalidGrantError:
+            raise InvalidAuthCodeError()
+        except google_drive_errors.InvalidClientError:
+            raise InvalidClientError()
+
+    def is_ready(self):
+        return self._service is not None
 
     @check_type_decorator(Resource)
     def set_google_service(self, service):

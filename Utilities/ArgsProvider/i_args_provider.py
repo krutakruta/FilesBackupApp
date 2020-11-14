@@ -13,9 +13,9 @@ class IDestinationProcessorsProvider:
         raise NotImplementedError()
 
 
-class ISettingUpProcessorsProvider:
+class ISetupProcessorsProvider:
     @abstractmethod
-    def get_all_setting_up_processors(self):
+    def get_all_setup_processors(self):
         raise NotImplementedError()
 
 
@@ -27,6 +27,6 @@ class IRestoreFilesProcessorsProvider:
 
 class IArgsProvider(IDestinationProcessorsProvider,
                     IBackupElementProcessorsProvider,
-                    ISettingUpProcessorsProvider,
+                    ISetupProcessorsProvider,
                     IRestoreFilesProcessorsProvider):
     pass

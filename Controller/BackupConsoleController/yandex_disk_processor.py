@@ -8,7 +8,7 @@ from enum import Enum
 from Model.Clouds\
     .yandex_disk_cloud import YandexDiskCloud
 from Model.model_exceptions import NotReadyToAuthorizeError,\
-    BadConfirmationCodeError, YandexDiskError
+    InvalidAuthCodeError, YandexDiskError
 
 
 class YDProcessorState(Enum):
@@ -19,11 +19,11 @@ class YDProcessorState(Enum):
     AUTHORIZED = 4
 
 
-class YandexDiskDestinationProcessor(Processor):
-    def __init__(self, sender, args_provider):
+class YandexDiskProcessor(Processor):
+    def __init__(self, sender, args_provider, yandex_disk_model):
         self._sender = sender
         self._args_provider = args_provider
-        self._yandex_disk_model = YandexDiskCloud(args_provider)
+        self._yandex_disk_model = yandex_disk_model
         self._state = YDProcessorState.CLIENT_ID
 
     def fit_for_request(self, str_request):
@@ -71,12 +71,12 @@ class YandexDiskDestinationProcessor(Processor):
         except NotReadyToAuthorizeError:
             self._sender.send_text("Не заданы client_id или client_secret")
             self._state = YDProcessorState.ERROR
-        except BadConfirmationCodeError:
+        except InvalidAuthCodeError:
             self._sender.send_text("Неверный код подтверждения")
         except YandexDiskError:
             self._sender.send_text("Yandex Disk: неизвестная ошибка")
-            raise
             self._state = YDProcessorState.ERROR
+            raise
 
     def _handle_authorized_state(self, str_request):
         if re.match(r"dirlist.*", str_request) is not None:

@@ -1,7 +1,7 @@
 import yadisk
 from Model.i_backup_destination import IBackupDestination
 from Model.BackupElements.i_yandex_disk_backupable import IYandexDiskBackupable
-from Model.model_exceptions import YandexDiskError, BadConfirmationCodeError, \
+from Model.model_exceptions import YandexDiskError, InvalidAuthCodeError, \
     NotReadyToAuthorizeError
 from Utilities.useful_functions import check_type_decorator
 
@@ -20,7 +20,7 @@ class YandexDiskCloud(IBackupDestination):
         try:
             token = self._service.get_token(confirmation_code)["access_token"]
         except yadisk.exceptions.BadRequestError:
-            raise BadConfirmationCodeError()
+            raise InvalidAuthCodeError()
         except Exception:
             raise YandexDiskError()
         if not self._service.check_token(token):
