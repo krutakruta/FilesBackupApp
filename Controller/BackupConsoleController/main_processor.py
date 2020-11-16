@@ -29,6 +29,8 @@ class MainProcessor(Processor):
     def process_request(self, str_request):
         if str_request == "exit":
             return True
+        elif str_request == "help":
+            self._sender.send_text(self.help)
         elif self._state == CreatingTaskState.START:
             self._process_request_start_state(str_request)
         elif self._state == CreatingTaskState.SETUP_TASK:
@@ -38,10 +40,7 @@ class MainProcessor(Processor):
         return False
 
     def _process_request_start_state(self, str_request):
-        if str_request == "help":
-            self._sender.send_text(self.help)
-
-        elif match(r"create task .+", str_request) is not None:
+        if match(r"create task .+", str_request) is not None:
             self._create_task(match(r"create task (.+)", str_request)
                               .group(1))
 
@@ -94,8 +93,11 @@ class MainProcessor(Processor):
             return process_req_and_remove_sub_proc_if_its_finished(
                 str_request, self._current_setup_processor,
                 self._remove_setting_up_subproc)
+        elif str_request == "back":
+            self._state = CreatingTaskState.START
+            return True
         for processor in self._args_provider.get_all_setup_processors(
-                current_backup_task=self._current_task_to_setup,
+                current_task=self._current_task_to_setup,
                 sender=self._sender,
                 args_provider=self._args_provider):
             if processor.fit_for_request(str_request):
@@ -162,7 +164,7 @@ class MainProcessor(Processor):
     - tasks list
 Запустить бэкап:
     - launch backup task_name"""
-        else:
+        elif self._state == CreatingTaskState.SETUP_TASK:
             return """Доступные команды:
 - add/remove file file_name/file_path
 - add/remove destination destination_name"""

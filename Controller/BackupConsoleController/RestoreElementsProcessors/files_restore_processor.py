@@ -25,7 +25,7 @@ class FilesRestoreProcessor(BackupProgramProcessor):
         elif self._state == FilesRestoreProcessorState.START:
             return self._handle_start_state(str_request)
         elif self._state == FilesRestoreProcessorState.SOURCE:
-
+            pass
 
     def _handle_start_state(self, str_request):
         if re_match(r"restore files.*", str_request) is not None:

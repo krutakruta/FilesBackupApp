@@ -16,8 +16,8 @@ class GDDProcessorState(Enum):
 
 
 class GoogleDriveDestinationProcessor(BackupProgramProcessor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._current_destination = GoogleDriveCloud(self._args_provider)
         self._state = GDDProcessorState.START
         self._google_drive_processor = GoogleDriveProcessor(
@@ -55,10 +55,9 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
                 self._sender.send_text(
                     "Настройка GoogleDriveDestination завершена")
                 self._state = GDDProcessorState.COMPLETE
-                return True
             self._current_destination.add_sub_path(str_request)
         elif self._state == GDDProcessorState.COMPLETE:
-            self._google_drive_processor.process_request(str_request)
+            return self._google_drive_processor.process_request(str_request)
         else:
             self._sender.send_text("Ошибка")
 

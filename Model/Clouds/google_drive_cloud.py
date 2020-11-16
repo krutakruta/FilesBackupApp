@@ -11,8 +11,8 @@ from Model.model_exceptions import NotReadyToAuthorizeError, \
 from Utilities.useful_functions import check_type_decorator, split_path
 
 
-AUTHORIZATION_PROMPT_MESSAGE = "Перейдите по ссылке для авторизации"
-DEFAULT_AUTH_CODE_MESSAGE = "Введите полученный код"
+AUTHORIZATION_PROMPT_MESSAGE = "Перейдите по ссылке для авторизации {url}"
+DEFAULT_AUTH_CODE_MESSAGE = "Введите полученный код: "
 REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob"
 
 

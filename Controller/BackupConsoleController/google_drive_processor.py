@@ -15,7 +15,7 @@ class GDProcessorState(Enum):
 
 
 class GoogleDriveProcessor(Processor):
-    def __init__(self, sender, args_provider, google_drive_model):
+    def __init__(self, sender, args_provider, google_drive_model, **kwargs):
         self._sender = sender
         self._args_provider = args_provider
         self._state = GDProcessorState.START
@@ -47,24 +47,25 @@ class GoogleDriveProcessor(Processor):
         self._state = GDProcessorState.CLIENT_SECRET
 
     def _handle_client_secret_state(self, str_request):
+        error = True
         try:
             self._google_drive_model.client_secret = re.match(
                 r"(.+)", str_request).group(1)
             self._google_drive_model.authorize()
+            self._sender.send_text("Вы авторизованы. Google drive добавлен")
+            self._state = GDProcessorState.AUTHORIZED
+            error = False
         except InvalidClientError:
             self._sender.send_text("Неверные client_id или client_secret")
-            self._state = GDProcessorState.START
-            self.process_request("start")
         except InvalidAuthCodeError:
             self._sender.send_text("Неверный код подтверждения")
-            self._state = GDProcessorState.START
-            self.process_request("start")
         except Exception:
             self._sender.send_text("Неизвестная ошибка")
             raise GoogleDriveError()
-        else:
-            self._sender.send_text("Вы авторизованы. Google drive добавлен")
-            self._state = GDProcessorState.AUTHORIZED
+        if error:
+            self._state = GDProcessorState.START
+            self.process_request("start")
+
 
     def _handle_authorized_state(self, str_request):
         if re.match(r"directories", str_request) is not None:

@@ -5,8 +5,8 @@ from Model.BackupElements.file_backup_el import FileBackupElement
 
 
 class FileProcessor(BackupProgramProcessor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def fit_for_request(self, str_request):
         return match("add file.*|remove file.*", str_request) is not None
