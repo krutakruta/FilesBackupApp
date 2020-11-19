@@ -19,8 +19,7 @@ class MainDestinationProcessor(BackupProgramProcessor):
         self._current_processor = None
 
     def fit_for_request(self, str_request):
-        return re_match(r"add destination.*|remove destination.*|"
-                        r"setup destination.*",
+        return re_match(r"add destination.*|remove destination.*|",
                         str_request) is not None
 
     def process_request(self, str_request):

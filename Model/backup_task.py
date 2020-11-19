@@ -22,7 +22,7 @@ class BackupTask:
         try:
             self._backup_elements.remove(
                 next(iter((el for el in self._backup_elements
-                           if el.title == title))))
+                           if el.destination_title == title))))
         except StopIteration:
             raise BackupTaskError("There is no elements with such name")
 
@@ -38,7 +38,7 @@ class BackupTask:
         try:
             self._backup_elements.remove(
                 next(iter((d for d in self._destination
-                           if d.title == title))))
+                           if d.destination_title == title))))
         except StopIteration:
             raise BackupTaskError("There is no destination with such name")
 

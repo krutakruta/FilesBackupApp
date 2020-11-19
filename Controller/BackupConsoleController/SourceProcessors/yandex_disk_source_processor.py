@@ -11,8 +11,9 @@ class YDSProcessorState(Enum):
     START = 0
     NAMING = 1
     SETUP_YANDEX_DISK = 2
-    SUB_PATH = 3
-    COMPLETE = 4
+    SOURCE_SUB_PATH = 3
+    DESTINATION_SUB_PATH = 4
+    COMPLETE = 5
 
 
 class YandexDiskSourceProcessor(BackupProgramProcessor):
@@ -38,7 +39,7 @@ class YandexDiskSourceProcessor(BackupProgramProcessor):
                 "Введите название: ", end="")
             self._state = YDSProcessorState.NAMING
         elif self._state == YDSProcessorState.NAMING:
-            self._current_source.title = str_request
+            self._current_source.destination_title = str_request
             self._sender.send_text("Авторизация в yandex disk")
             self._yandex_disk_processor.process_request("start")
             self._state = YDSProcessorState.SETUP_YANDEX_DISK
@@ -46,15 +47,20 @@ class YandexDiskSourceProcessor(BackupProgramProcessor):
             self._yandex_disk_processor.process_request(str_request)
             if self._yandex_disk_processor.is_finished():
                 self._sender.send_text(
-                    "Введите sub paths"
+                    "Введите подпути к файлам из источника"
                     "(для завершения введите пустую строку): ")
-                self._state = YDSProcessorState.SUB_PATH
-        elif self._state == YDSProcessorState.SUB_PATH:
+                self._state = YDSProcessorState.SOURCE_SUB_PATH
+        elif self._state == YDSProcessorState.SOURCE_SUB_PATH:
             if str_request == "":
                 self._sender.send_text(
-                    "Настройка GoogleDriveDestination завершена")
-                self._state = YDSProcessorState.COMPLETE
-            self._current_source.add_sub_path(str_request)
+                    "Введите подпуть для сохранения: ")
+                self._state = YDSProcessorState.DESTINATION_SUB_PATH
+            self._current_source.add_source_sub_path_to_restore(str_request)
+        elif self._state == YDSProcessorState.DESTINATION_SUB_PATH:
+            self._current_source.add_destination_sub_path_to_restore(str_request)
+            self._sender.send_text(
+                "Настройка GoogleDriveDestination завершена")
+            self._state = YDSProcessorState.COMPLETE
         elif self._state == YDSProcessorState.COMPLETE:
             return self._yandex_disk_processor.process_request(str_request)
         else:

@@ -33,11 +33,11 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
                 is not None):
             self._current_task.add_destination(self._current_destination)
             self._sender.send_text(
-                "Настройка yandexDisk destination\n"
+                "Настройка yandexDisk source\n"
                 "Введите название: ", end="")
             self._state = YDDProcessorState.NAMING
         elif self._state == YDDProcessorState.NAMING:
-            self._current_destination.title = str_request
+            self._current_destination.destination_title = str_request
             self._sender.send_text("Авторизация в yandex disk")
             self._yandex_disk_processor.process_request("start")
             self._state = YDDProcessorState.SETUP_YANDEX_DISK
@@ -45,7 +45,7 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
             self._yandex_disk_processor.process_request(str_request)
             if self._yandex_disk_processor.is_finished():
                 self._sender.send_text(
-                    "Введите sub paths"
+                    "Введите подпути для сохранения"
                     "(для завершения введите пустую строку): ")
                 self._state = YDDProcessorState.SUB_PATH
         elif self._state == YDDProcessorState.SUB_PATH:
@@ -53,7 +53,7 @@ class YandexDiskDestinationProcessor(BackupProgramProcessor):
                 self._sender.send_text(
                     "Настройка GoogleDriveDestination завершена")
                 self._state = YDDProcessorState.COMPLETE
-            self._current_destination.add_sub_path(str_request)
+            self._current_destination.add_sub_path_to_backup(str_request)
         elif self._state == YDDProcessorState.COMPLETE:
             return self._yandex_disk_processor.process_request(str_request)
         else:

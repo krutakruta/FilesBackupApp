@@ -5,6 +5,7 @@ from oauthlib.oauth2.rfc6749 import errors as google_drive_errors
 from Model.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
+from Model.i_files_source import IFilesSource
 from Model.model_exceptions import NotReadyToAuthorizeError, \
     ThereIsNoSubPathLikeThatInGoogleDrive, InvalidClientError,\
     InvalidAuthCodeError
@@ -23,7 +24,7 @@ class Graph:
         self.children = []
 
 
-class GoogleDriveCloud(IBackupDestination):
+class GoogleDriveCloud(IBackupDestination, IFilesSource):
     def __init__(self, args_provider, title="GoogleDrive",
                  client_id=None, client_sec=None):
         self._title = title
@@ -116,7 +117,7 @@ class GoogleDriveCloud(IBackupDestination):
             if self._service is None:
                 self.authorize()
             if not isinstance(element, IGoogleDriveBackupable):
-                return f"Google drive: не удалось доставить {element.title}," \
+                return f"Google drive: не удалось доставить {element.destination_title}," \
                        f"т.к. эта функция для данного элемента не поддерживается"
             backup_result = []
             for sub_path in self._sub_paths:
@@ -211,21 +212,39 @@ class GoogleDriveCloud(IBackupDestination):
         return self._credentials["installed"]["client_secret"]
 
     @property
-    def description(self):
+    def source_title(self):
+        pass
+
+    @property
+    def source_description(self):
+        pass
+
+    @property
+    def include_source(self):
+        pass
+
+    def add_source_sub_path_to_restore(self, sub_path):
+        pass
+
+    def add_destination_sub_path_to_restore(self, sub_path):
+        pass
+
+    @property
+    def destination_description(self):
         return "Google drive облако"
 
     @property
-    def include(self):
+    def include_destination(self):
         return self._include_flag
 
     @property
-    def title(self):
+    def destination_title(self):
         return self._title
 
-    def add_sub_path(self, sub_path):
+    def add_sub_path_to_backup(self, sub_path):
         self._sub_paths.append(sub_path)
 
-    def remove_sub_path(self, sub_path):
+    def remove_backup_sub_path(self, sub_path):
         self._sub_paths.remove(sub_path)
 
     @client_id.setter
@@ -238,12 +257,12 @@ class GoogleDriveCloud(IBackupDestination):
     def client_secret(self, value):
         self._credentials["installed"]["client_secret"] = value
 
-    @include.setter
+    @include_destination.setter
     @check_type_decorator(bool)
     def include(self, value):
         self._include_flag = value
 
-    @title.setter
+    @destination_title.setter
     @check_type_decorator(str)
     def title(self, value):
         self._title = value

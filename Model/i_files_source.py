@@ -9,8 +9,18 @@ class IFilesSource:
 
     @property
     @abstractmethod
-    def description(self):
+    def source_description(self):
         raise NotImplementedError()
 
-    def include(self):
+    @property
+    @abstractmethod
+    def include_source(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def add_source_sub_path_to_restore(self, sub_path):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def add_destination_sub_path_to_restore(self, sub_path):
         raise NotImplementedError()
