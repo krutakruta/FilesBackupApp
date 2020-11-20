@@ -12,19 +12,14 @@ class IFilesSource:
     def source_description(self):
         raise NotImplementedError()
 
-    @property
     @abstractmethod
-    def include_source(self):
+    def set_destination_sub_path_to_restore(self, sub_path):
         raise NotImplementedError()
 
     @abstractmethod
-    def add_source_sub_path_to_restore(self, sub_path):
+    def add_element_to_restore(self, element):
         raise NotImplementedError()
 
     @abstractmethod
-    def add_destination_sub_path_to_restore(self, sub_path):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def restore(self, source_sub_path, destination_sub_path):
+    def restore(self, element):
         raise NotImplementedError()

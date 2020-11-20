@@ -1,7 +1,7 @@
 from Controller.BackupConsoleController\
     .backup_program_processor import BackupProgramProcessor
 from re import match
-from Model.BackupElements.file_backup_el import FileBackupElement
+from Model.file import File
 
 
 class FileProcessor(BackupProgramProcessor):
@@ -21,7 +21,7 @@ class FileProcessor(BackupProgramProcessor):
                 self._sender.send_text("Вы не задали имя файла")
                 return False
             self._current_task.add_backup_element(
-                FileBackupElement(path_match.group(1)))
+                File(path_match.group(1)))
             self._sender.send_text("Файл добавлен")
             return True
         elif command == "remove":

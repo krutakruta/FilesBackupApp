@@ -5,14 +5,15 @@ from Controller.BackupConsoleController.\
 from Controller.BackupConsoleController.\
     google_drive_processor import GoogleDriveProcessor
 from Model.Clouds.google_drive_cloud import GoogleDriveCloud
+from Model.file import File
 
 
 class GDSProcessorState(Enum):
     START = 0
     NAMING = 1
     SETUP_GOOGLE_DRIVE = 2
-    SOURCE_SUB_PATH = 3
-    DESTINATION_SUB_PATH = 4
+    DESTINATION_SUB_PATH = 3
+    ADD_FILE_REMAINING = 4
     COMPLETE = 5
 
 
@@ -47,21 +48,21 @@ class GoogleDriveSourceProcessor(BackupProgramProcessor):
         elif self._state == GDSProcessorState.SETUP_GOOGLE_DRIVE:
             self._google_drive_processor.process_request(str_request)
             if self._google_drive_processor.is_finished():
-                self._state = GDSProcessorState.SOURCE_SUB_PATH
+                self._state = GDSProcessorState.DESTINATION_SUB_PATH
                 self._sender.send_text(
-                    "Введите пути к файлам из источника"
-                    "(для завершения введите пустую строку): ")
-        elif self._state == GDSProcessorState.SOURCE_SUB_PATH:
-            if str_request == "":
-                self._sender.send_text(
-                    "Введите путь для сохранения: ")
-                self._state = GDSProcessorState.COMPLETE
-            self._current_source.add_source_sub_path_to_restore(str_request)
+                    "Введите путь для сохранения: ", end="")
         elif self._state == GDSProcessorState.DESTINATION_SUB_PATH:
-            self._current_source.add_destination_sub_path_to_restore(str_request)
+            self._current_source.set_destination_sub_path_to_restore(str_request)
             self._sender.send_text(
-                "Настройка GoogleDriveSource завершена")
-            self._state = GDSProcessorState.COMPLETE
+                "Введите путь к файлам на google drive"
+                "(для завершения введите пустую строку): ", end="")
+            self._state = GDSProcessorState.ADD_FILE_REMAINING
+        elif self._state == GDSProcessorState.ADD_FILE_REMAINING:
+            if str_request != "":
+                self._current_source.add_element_to_restore(File(str_request))
+            else:
+                self._sender.send_text("Настройка Google Drive source завершена")
+                self._state = GDSProcessorState.COMPLETE
         elif self._state == GDSProcessorState.COMPLETE:
             return self._google_drive_processor.process_request(str_request)
         else:

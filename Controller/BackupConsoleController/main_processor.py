@@ -9,8 +9,8 @@ from Utilities.useful_functions import \
 
 class CreatingTaskState(Enum):
     START = 0
-    SETUP_TASK = 1
-    RESTORE_FILES = 2
+    SETUP_BACKUP_TASK = 1
+    SETUP_RESTORE_TASK = 2
 
 
 class MainProcessor(Processor):
@@ -31,9 +31,9 @@ class MainProcessor(Processor):
             return True
         elif self._state == CreatingTaskState.START:
             self._process_request_start_state(str_request)
-        elif self._state == CreatingTaskState.SETUP_TASK:
+        elif self._state == CreatingTaskState.SETUP_BACKUP_TASK:
             self._process_request_setup_task_state(str_request)
-        elif self._state == CreatingTaskState.RESTORE_FILES:
+        elif self._state == CreatingTaskState.SETUP_RESTORE_TASK:
             self._process_restore_files_state(str_request)
         return False
 
@@ -62,7 +62,13 @@ class MainProcessor(Processor):
         elif match(r"create restore task .*", str_request) is not None:
             self._process_restore_files_state(str_request)
 
+        elif match(r"setup restore task .+", str_request) is not None:
+            pass
+
         elif match(r"delete restore task .*", str_request) is not None:
+            pass
+
+        elif match(r"launch restore .+", str_request) is not None:
             pass
 
         elif match(r"tasks list", str_request) is not None:
@@ -93,7 +99,7 @@ class MainProcessor(Processor):
         self._current_task_to_setup = \
             self._backup_program_model.get_backup_tasks_dict()[task_name]
         self._sender.send_text(f"Настройки бэкапа {task_name}")
-        self._state = CreatingTaskState.SETUP_TASK
+        self._state = CreatingTaskState.SETUP_BACKUP_TASK
 
     def _process_request_setup_task_state(self, str_request):
         if self._current_setup_processor is not None:
@@ -174,7 +180,7 @@ class MainProcessor(Processor):
     - tasks list
 Запустить бэкап:
     - launch backup task_name"""
-        elif self._state == CreatingTaskState.SETUP_TASK:
+        elif self._state == CreatingTaskState.SETUP_BACKUP_TASK:
             return """Доступные команды:
 - add/remove file file_name/file_path
 - add/remove destination destination_name"""

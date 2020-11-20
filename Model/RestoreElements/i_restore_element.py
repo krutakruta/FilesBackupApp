@@ -1,22 +1,18 @@
 from abc import abstractmethod
 
 
-class IBackupElement:
+class IRestoreElement:
+    @property
     @abstractmethod
-    def is_ready_for_backup(self):
+    def restore_title(self):
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def backup_title(self):
+    def restore_type_description(self):
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def type_description(self):
-        raise NotImplementedError()
-
-    @property
-    @abstractmethod
-    def backup_log(self):
+    def restore_log(self):
         raise NotImplementedError()

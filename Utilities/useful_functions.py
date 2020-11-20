@@ -19,10 +19,11 @@ def check_type(obj, *expected_types):
 
 
 def parse_path_and_get_path_sheet(path):
-    split = path.replace("\\", "/").split("/")
-    if len(split) > 1:
-        return split[-1] if split[-1] != "" else split[-2]
-    return split[0]
+    return split_path(path)[-1]
+
+
+def split_path(path):
+    return path.replace("\\", "/").split("/").filter(lambda item: item != "")
 
 
 def split_path(path):

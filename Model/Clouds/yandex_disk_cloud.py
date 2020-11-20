@@ -17,7 +17,7 @@ class YandexDiskCloud(IBackupDestination):
         self._include_destination = True
         self._sub_paths_to_backup = []
         self._source_sub_paths_to_restore = []
-        self._destination_sub_paths_to_restore = []
+        self._destination_sub_path_to_restore = ""
         self._service = yadisk.YaDisk()
 
     def authorize(self, confirmation_code):
@@ -64,7 +64,7 @@ class YandexDiskCloud(IBackupDestination):
 
     @check_type_decorator(str)
     def add_destination_sub_path_to_restore(self, sub_path):
-        self._destination_sub_paths_to_restore.append(sub_path)
+        self._destination_sub_path_to_restore = sub_path
 
     @property
     def source_title(self):

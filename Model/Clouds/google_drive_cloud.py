@@ -2,6 +2,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 from oauthlib.oauth2.rfc6749 import errors as google_drive_errors
 
+from Model.RestoreElements.\
+    i_google_drive_recovering import IGoogleDriveRecovering
+from Model.RestoreElements.i_restore_element import IRestoreElement
 from Model.i_backup_destination import IBackupDestination
 from Model.BackupElements \
     .i_google_drive_backupable import IGoogleDriveBackupable
@@ -10,6 +13,7 @@ from Model.model_exceptions import NotReadyToAuthorizeError, \
     ThereIsNoSubPathLikeThatInGoogleDrive, InvalidClientError,\
     InvalidAuthCodeError
 from Utilities.useful_functions import check_type_decorator, split_path
+from Utilities.useful_functions import parse_path_and_get_path_sheet
 
 
 AUTHORIZATION_PROMPT_MESSAGE = "Перейдите по ссылке для авторизации {url}"
@@ -30,10 +34,9 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
                  client_id=None, client_sec=None):
         self._destination_title = dest_title
         self._source_title = source_title
-        self._include_flag = True
         self._sub_paths_to_backup = []
-        self._source_sub_paths_to_restore = []
-        self._destination_sub_paths_to_restore = []
+        self._elements_to_restore = []
+        self._destination_sub_path_to_restore = "/"
         self._credentials = self._create_credentials(client_id, client_sec)
         self._scopes = ['https://www.googleapis.com/auth/drive']
         self._service = None
@@ -71,7 +74,8 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
             if path == "/":
                 return {"корневой каталог":
                             list(filter(lambda file: "parents" not in file,
-                                        self._get_all_files_list(
+                                        GoogleDriveCloud._get_all_files_list(
+                                            self._service,
                                             ["id", "name", "parents"])))}
             target_folders = GoogleDriveCloud. \
                 get_target_folders_of_not_root_path_in_google_drive(
@@ -121,21 +125,37 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
             if self._service is None:
                 self.authorize()
             if not isinstance(element, IGoogleDriveBackupable):
-                return f"Google drive: не удалось доставить {element.destination_title}," \
-                       f"т.к. эта функция для данного элемента не поддерживается"
+                return f"GoogleDriveBackup: не удалось доставить " \
+                       f"{element.destination_title}," \
+                       f"т.к. эта функция для данного элемента " \
+                       f"не поддерживается"
             backup_result = []
             for sub_path in self._sub_paths_to_backup:
                 backup_result.append(element.backup_to_google_drive(
-                    self._service, sub_path=sub_path))
+                    self._service, dst_path=sub_path))
             return "\n".join(backup_result)
         except NotReadyToAuthorizeError:
-            return "Не удалось доставить элемент(-ы)," \
+            return "GoogleDriveBackup: Не удалось доставить элемент(-ы)," \
                    "т.к. программа не авторизована в google drive"
         except Exception:
             return "Неизвестная ошибка в Google Drive destination"
 
-    def restore(self, source_sub_path, destination_sub_path):
-        pass
+    def restore(self, element):
+        try:
+            if self._service is None:
+                self.authorize()
+            if not isinstance(element, IGoogleDriveRecovering):
+                return f"GoogleDriveRestore: не удалось доставить " \
+                       f"{element.source_title}," \
+                       f"т.к. эта функция для данного элемента " \
+                       f"не поддерживается"
+            return element.restore_from_google_drive(
+                self._service, self._destination_sub_path_to_restore)
+        except NotReadyToAuthorizeError:
+            return "GoogleDriveRestore: не удалось восстановить элемент, " \
+                   "т.к. программа не авторизована в Google Drive"
+        except Exception:
+            return "Неизвестная ошибка в Google Drive Source"
 
     @staticmethod
     def get_target_folders_of_not_root_path_in_google_drive(service, path):
@@ -158,6 +178,23 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
         return target_folders
 
     @staticmethod
+    def get_target_files(service, path):
+        path_items = split_path(path)
+        if len(path_items) == 1:
+            return service.files().list(
+                q=f"name={path_items[-1]}",
+                field="files(id, name)").execute()["files"]
+        target_folders = GoogleDriveCloud.\
+            get_target_folders_of_not_root_path_in_google_drive(
+                "/".join(path_items[:-1]))
+        files = []
+        for folder in target_folders:
+            files += service.files().list(
+                    q=f"{folder['id']} in parents and name={path_items[-1]}",
+                    fields="files(id, name)").execute()["files"]
+        return files
+
+    @staticmethod
     def _find_target_folders(folders, curr_folder,
                              depth, path_items, target_folders):
         if depth == len(path_items):
@@ -169,10 +206,11 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
             GoogleDriveCloud._find_target_folders(
                 folders, fol, depth + 1, path_items, target_folders)
 
-    def _get_all_files_list(self, file_fields):
+    @staticmethod
+    def _get_all_files_list(google_service, file_fields):
         files = []
         while True:
-            response = self._service.files().list(
+            response = google_service.files().list(
                 pageSize=100,
                 fields=f"nextPageToken, files({', '.join(file_fields)})") \
                 .execute()
@@ -198,6 +236,7 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
 
     # TODO
     def _create_directories_list(self, files):
+        raise NotImplementedError()
         graph = self._create_files_graph(files)
         directories_list = []
         for root in filter(lambda v: (v.data["mimeType"] ==
@@ -226,17 +265,13 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
     def source_description(self):
         return "Google drive облако"
 
-    @property
-    def include_source(self):
-        return True
-
     @check_type_decorator(str)
-    def add_source_sub_path_to_restore(self, sub_path):
-        self._source_sub_paths_to_restore.append(sub_path)
+    def set_destination_sub_path_to_restore(self, sub_path):
+        self._destination_sub_path_to_restore = sub_path
 
-    @check_type_decorator(str)
-    def add_destination_sub_path_to_restore(self, sub_path):
-        self._destination_sub_paths_to_restore.append(sub_path)
+    @check_type_decorator(IRestoreElement)
+    def add_element_to_restore(self, element):
+        self._elements_to_restore.append(element)
 
     @property
     def destination_title(self):
@@ -245,10 +280,6 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
     @property
     def destination_description(self):
         return "Google drive облако"
-
-    @property
-    def include_destination(self):
-        return self._include_flag
 
     def add_sub_path_to_backup(self, sub_path):
         self._sub_paths_to_backup.append(sub_path)
