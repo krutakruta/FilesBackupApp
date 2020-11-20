@@ -25,9 +25,7 @@ class GoogleDriveProcessor(Processor):
         return True
 
     def process_request(self, str_request):
-        if str_request == "back":
-            return True
-        elif str_request == "help":
+        if str_request == "help":
             self._sender.send_text(self.help)
         elif self._state == GDProcessorState.CLIENT_ID:
             self._handle_client_id_state(str_request)

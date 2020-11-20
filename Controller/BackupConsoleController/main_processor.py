@@ -37,54 +37,61 @@ class MainProcessor(Processor):
             self._process_restore_files_state(str_request)
         return False
 
+    def is_finished(self):
+        return False
+
     def _process_request_start_state(self, str_request):
         if str_request == "help":
             self._sender.send_text(self.help)
-        elif match(r"create task .+", str_request) is not None:
-            self._create_task(match(r"create task (.+)", str_request)
+        elif match(r"create backup task .+", str_request) is not None:
+            self._create_task(match(r"create backup task (.+)", str_request)
                               .group(1))
 
-        elif match(r"delete task .+", str_request) is not None:
-            self._delete_task(match(r"delete task (.+)", str_request)
+        elif match(r"delete backup task .+", str_request) is not None:
+            self._delete_task(match(r"delete backup task (.+)", str_request)
                               .group(1))
 
-        elif match(r"setup task .+", str_request) is not None:
+        elif match(r"setup backup task .+", str_request) is not None:
             self._setup_task(match(r"setup task (.+)", str_request).group(1))
+
+        elif match(r"launch backup .+", str_request) is not None:
+            self._sender.send_text("Бэкап завершен. Результат:\n")
+            self._sender.send_text("\n".join(self._backup_program_model.launch_backup(
+                match(r"launch backup (.+)", str_request).group(1))))
+
+        elif match(r"create restore task .*", str_request) is not None:
+            self._process_restore_files_state(str_request)
+
+        elif match(r"delete restore task .*", str_request) is not None:
+            pass
 
         elif match(r"tasks list", str_request) is not None:
             self._send_tasks_list()
 
-        elif match(r"launch backup .+", str_request) is not None:
-            self._sender.send_text("Бэкап завершен. Результат:\n\n")
-            self._sender.send_text(self._backup_program_model.launch_backup(
-                match(r"launch backup (.+)", str_request).group(1)))
-            return True
-        elif match(r"restore .*", str_request) is not None:
-            self._process_restore_files_state(str_request)
         else:
             self._send_i_dont_understand()
         return False
 
     def _create_task(self, task_name):
         try:
-            self._backup_program_model.create_task(task_name)
+            self._backup_program_model.create_backup_task(task_name)
             self._sender.send_text(f"Бэкап {task_name} создан")
         except TaskWithTheSameNameAlreadyExist:
             self._sender.send_text("Бэкап с таким именем уже существует")
 
     def _delete_task(self, task_name):
         try:
-            self._backup_program_model.delete_task(task_name)
+            self._backup_program_model.delete_backup_task(task_name)
             self._sender.send_text(f"Бэкап {task_name} удален")
         except ThereIsNoTaskWithSuchName:
             self._sender.send_text("Бэкапа с таким именем не существует")
 
     def _setup_task(self, task_name):
-        if task_name not in self._backup_program_model.get_tasks_dict():
+        if task_name not in self._backup_program_model.get_backup_tasks_dict():
             self._sender.send_text("Такого таска не существует")
             return False
         self._current_task_to_setup = \
-            self._backup_program_model.get_tasks_dict()[task_name]
+            self._backup_program_model.get_backup_tasks_dict()[task_name]
         self._sender.send_text(f"Настройки бэкапа {task_name}")
         self._state = CreatingTaskState.SETUP_TASK
 
@@ -96,6 +103,9 @@ class MainProcessor(Processor):
         elif str_request == "back":
             self._state = CreatingTaskState.START
             return True
+        elif str_request == "help":
+            self._sender.send_text(self.help)
+            return False
         for processor in self._args_provider.get_all_setup_processors(
                 current_task=self._current_task_to_setup,
                 sender=self._sender,
@@ -132,7 +142,7 @@ class MainProcessor(Processor):
         self._sender.send_text("Не понял запрос. Справка: help")
 
     def _send_tasks_list(self):
-        task_dict = self._backup_program_model.get_tasks_dict()
+        task_dict = self._backup_program_model.get_backup_tasks_dict()
         if len(task_dict) != 0:
             rows_to_send = []
             counter = 1

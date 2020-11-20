@@ -55,7 +55,8 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
                 self._sender.send_text(
                     "Настройка GoogleDriveDestination завершена")
                 self._state = GDDProcessorState.COMPLETE
-            self._current_destination.add_sub_path_to_backup(str_request)
+            else:
+                self._current_destination.add_sub_path_to_backup(str_request)
         elif self._state == GDDProcessorState.COMPLETE:
             return self._google_drive_processor.process_request(str_request)
         else:

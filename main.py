@@ -1,4 +1,4 @@
-from Model.backup_program_model import BackupProgramModel
+from Model.program_model import ProgramModel
 from Utilities.ArgsProvider.args_provider import ArgsProvider
 from Controller.BackupConsoleController.main_processor import MainProcessor
 from Controller.BackupConsoleController.\
@@ -15,7 +15,7 @@ def launch_console_mode(model):
 
 
 def main():
-    launch_console_mode(BackupProgramModel())
+    launch_console_mode(ProgramModel())
 
 
 if __name__ == "__main__":

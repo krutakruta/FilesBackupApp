@@ -7,7 +7,7 @@ from Model.model_exceptions import YandexDiskError, InvalidAuthCodeError, \
 from Utilities.useful_functions import check_type_decorator
 
 
-class YandexDiskCloud(IBackupDestination, IFilesSource):
+class YandexDiskCloud(IBackupDestination):
     def __init__(self, args_provider, dest_title="YandexDiskDestination",
                  source_title="YandexDiskSource"):
         self._args_provider = args_provider
@@ -15,7 +15,7 @@ class YandexDiskCloud(IBackupDestination, IFilesSource):
         self._source_title = source_title
         self._include_source = True
         self._include_destination = True
-        self._sub_paths_to_backup = ["/"]
+        self._sub_paths_to_backup = []
         self._source_sub_paths_to_restore = []
         self._destination_sub_paths_to_restore = []
         self._service = yadisk.YaDisk()

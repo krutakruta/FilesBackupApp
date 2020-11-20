@@ -22,9 +22,5 @@ class IBackupDestination:
         raise NotImplementedError()
 
     @abstractmethod
-    def remove_backup_sub_path(self, sub_path):
-        raise NotImplementedError()
-
-    @abstractmethod
     def deliver_element(self, element):
         raise NotImplementedError()

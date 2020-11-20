@@ -25,11 +25,15 @@ class Graph:
 
 
 class GoogleDriveCloud(IBackupDestination, IFilesSource):
-    def __init__(self, args_provider, title="GoogleDrive",
+    def __init__(self, args_provider, dest_title="Google Drive destination",
+                 source_title="Google Drive source",
                  client_id=None, client_sec=None):
-        self._title = title
+        self._destination_title = dest_title
+        self._source_title = source_title
         self._include_flag = True
-        self._sub_paths = ["/"]
+        self._sub_paths_to_backup = []
+        self._source_sub_paths_to_restore = []
+        self._destination_sub_paths_to_restore = []
         self._credentials = self._create_credentials(client_id, client_sec)
         self._scopes = ['https://www.googleapis.com/auth/drive']
         self._service = None
@@ -71,7 +75,7 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
                                             ["id", "name", "parents"])))}
             target_folders = GoogleDriveCloud. \
                 get_target_folders_of_not_root_path_in_google_drive(
-                self._service, path)
+                    self._service, path)
             files = {}
             for folder in target_folders:
                 files[folder["id"]] = []
@@ -120,7 +124,7 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
                 return f"Google drive: не удалось доставить {element.destination_title}," \
                        f"т.к. эта функция для данного элемента не поддерживается"
             backup_result = []
-            for sub_path in self._sub_paths:
+            for sub_path in self._sub_paths_to_backup:
                 backup_result.append(element.backup_to_google_drive(
                     self._service, sub_path=sub_path))
             return "\n".join(backup_result)
@@ -129,6 +133,9 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
                    "т.к. программа не авторизована в google drive"
         except Exception:
             return "Неизвестная ошибка в Google Drive destination"
+
+    def restore(self, source_sub_path, destination_sub_path):
+        pass
 
     @staticmethod
     def get_target_folders_of_not_root_path_in_google_drive(service, path):
@@ -173,7 +180,7 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
             if "nextPageToken" not in response:
                 return files
 
-    # Понадобиться позже
+    # Понадобится позже
     def _create_files_graph(self, files):
         graph = {}
         for file in files:
@@ -213,21 +220,27 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
 
     @property
     def source_title(self):
-        pass
+        return self._source_title
 
     @property
     def source_description(self):
-        pass
+        return "Google drive облако"
 
     @property
     def include_source(self):
-        pass
+        return True
 
+    @check_type_decorator(str)
     def add_source_sub_path_to_restore(self, sub_path):
-        pass
+        self._source_sub_paths_to_restore.append(sub_path)
 
+    @check_type_decorator(str)
     def add_destination_sub_path_to_restore(self, sub_path):
-        pass
+        self._destination_sub_paths_to_restore.append(sub_path)
+
+    @property
+    def destination_title(self):
+        return self._destination_title
 
     @property
     def destination_description(self):
@@ -237,15 +250,21 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
     def include_destination(self):
         return self._include_flag
 
-    @property
-    def destination_title(self):
-        return self._title
-
     def add_sub_path_to_backup(self, sub_path):
-        self._sub_paths.append(sub_path)
+        self._sub_paths_to_backup.append(sub_path)
 
     def remove_backup_sub_path(self, sub_path):
-        self._sub_paths.remove(sub_path)
+        self._sub_paths_to_backup.remove(sub_path)
+
+    @destination_title.setter
+    @check_type_decorator(str)
+    def destination_title(self, value):
+        self._destination_title = value
+
+    @source_title.setter
+    @check_type_decorator(str)
+    def source_title(self, value):
+        self._source_title = value
 
     @client_id.setter
     @check_type_decorator(str)
@@ -256,16 +275,6 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
     @check_type_decorator(str)
     def client_secret(self, value):
         self._credentials["installed"]["client_secret"] = value
-
-    @include_destination.setter
-    @check_type_decorator(bool)
-    def include(self, value):
-        self._include_flag = value
-
-    @destination_title.setter
-    @check_type_decorator(str)
-    def title(self, value):
-        self._title = value
 
     def _create_credentials(self, client_id, client_secret):
         return {"installed": {

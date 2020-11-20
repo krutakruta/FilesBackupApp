@@ -1,4 +1,4 @@
-from Model.model_exceptions import BackupTaskError
+from Model.model_exceptions import TaskError
 from Utilities.useful_functions import check_type_decorator
 from Model.BackupElements.i_backup_element import IBackupElement
 from Model.i_backup_destination import IBackupDestination
@@ -13,8 +13,8 @@ class BackupTask:
     @check_type_decorator(IBackupElement)
     def add_backup_element(self, element):
         if element in self._backup_elements:
-            raise BackupTaskError(
-                "Backup element with such name already exists")
+            raise TaskError(
+                "Элемент для бэкапа с таким названием уже существует")
         self._backup_elements.append(element)
 
     @check_type_decorator(str)
@@ -24,13 +24,14 @@ class BackupTask:
                 next(iter((el for el in self._backup_elements
                            if el.destination_title == title))))
         except StopIteration:
-            raise BackupTaskError("There is no elements with such name")
+            raise TaskError(
+                "Элементов для бэкапа с таким название не существует")
 
     @check_type_decorator(IBackupDestination)
     def add_destination(self, destination):
-        if destination in self._destination:
-            raise BackupTask(
-                "Backup destination with such name already exists")
+        if destination.destination_title in (title for title in self._destination):
+            raise TaskError(
+                "Назначение с таким названием уже существует")
         self._destination.append(destination)
 
     @check_type_decorator(str)
@@ -40,13 +41,13 @@ class BackupTask:
                 next(iter((d for d in self._destination
                            if d.destination_title == title))))
         except StopIteration:
-            raise BackupTaskError("There is no destination with such name")
+            raise TaskError("Назначения с таким названием не существует")
 
     def launch_backup(self):
-        result_log = set()
+        result_log = []
         for destination in self._destination:
             for backup_element in self._backup_elements:
-                result_log.add(destination.deliver_element(backup_element))
+                result_log.append(destination.deliver_element(backup_element))
         return result_log
 
     @property

@@ -8,7 +8,9 @@ from Model.Clouds.google_drive_cloud import GoogleDriveCloud
 
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+from Model.model_exceptions import ProgramException
+
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
 def main():
@@ -40,16 +42,13 @@ def main():
     # Call the Drive v3 API
     results = service.files().list(
         pageSize=30, fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
-    x = service.files().get('0AIeEoT6Js27gUk9PVA').execute()
-    print(x)
-    return
-    if not items:
-        print('No files found.')
-    else:
-        print('Files:')
-        for item in items:
-            print(u'{0} ({1})'.format(item['name'], item['id']))
+    file_metadata = {
+        "name": "1.txt",
+        "parents": []
+    }
+    media = MediaFileUpload("C:/kartinki/1.txt")
+    r = service.files().create(body=file_metadata, media_body=media).execute()
+    print(r)
 
 
 def smain():
@@ -61,10 +60,7 @@ def smain():
 
 
 if __name__ == '__main__':
-    x = input()
-    print(f"x={x}-")
-    #main()
-
+    main()
 
 
 

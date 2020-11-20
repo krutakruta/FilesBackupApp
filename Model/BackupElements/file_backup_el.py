@@ -32,21 +32,20 @@ class FileBackupElement(IBackupElement, IGoogleDriveBackupable,
                                      sub_path.replace("\\", "/").split("/"))) +
                          [parse_path_and_get_path_sheet(self._file_path)]),
                 overwrite=True)
+            return f"Yandex Disk: {self._file_path} успех"
         except Exception:
-            self._backup_log.append(
-                f"Yandex Disk: Неизвестная ошибка при попытке бэкапа"
-                f"файла {self._file_path}")
-        else:
-            self._backup_log.append(
-                f"Yandex Disk: {self._file_path} success")
+            return f"Yandex Disk: Неизвестная ошибка при попытке бэкапа " \
+                   f"файла {self._file_path}"
 
     def backup_to_google_drive(self, google_service, sub_path,
                                *args, **kwargs):
         try:
-            target_folders_id = list(
-                map(lambda folder: folder["id"],
-                    GoogleDriveCloud.get_target_folders_of_not_root_path_in_google_drive(
-                        google_service, sub_path)))
+            target_folders_id = []
+            if sub_path != "/":
+                target_folders_id = list(
+                    map(lambda folder: folder["id"],
+                        GoogleDriveCloud.get_target_folders_of_not_root_path_in_google_drive(
+                            google_service, sub_path)))
             file_metadata = {
                 "name": parse_path_and_get_path_sheet(self._file_path),
                 "parents": target_folders_id
@@ -54,22 +53,17 @@ class FileBackupElement(IBackupElement, IGoogleDriveBackupable,
             media = MediaFileUpload(self._file_path, resumable=True)
             google_service.files().create(
                 body=file_metadata, media_body=media, fields="id").execute()
+            return f"GoogleDrive: {self._file_path} успех"
         except ThereIsNoSubPathLikeThatInGoogleDrive:
-            self._backup_log.append(
-                f"GoogleDrive: подпути {sub_path} в"
-                f"Google Drive не существует")
+            return f"GoogleDrive: подпути {sub_path} в " \
+                   f"Google Drive не существует"
         except FileNotFoundError:
-            self._backup_log.append(
-                f"GoogleDrive: Файл {self._file_path} не найден")
+            return f"GoogleDrive: Файл {self._file_path} не найден"
         except PermissionError:
-            self._backup_log.append(
-                f"GoogleDrive: Ошибка доступа к файлу {self._file_path}")
+            return f"GoogleDrive: Ошибка доступа к файлу {self._file_path}"
         except Exception:
-            self._backup_log.append(
-                f"GoogleDrive: неизвестная ошибка"
-                f"при попытке отправить файл {self._file_path}")
-        else:
-            self._backup_log.append(f"GoogleDrive: {self._file_path} success")
+            return f"GoogleDrive: неизвестная ошибка " \
+                   f"при попытке отправить файл {self._file_path}"
 
     @property
     def title(self):
