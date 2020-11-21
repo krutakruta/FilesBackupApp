@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from Controller.BackupConsoleController.\
-    backup_program_processor import BackupProgramProcessor
+    backup_program_processor import ProgramProcessor
 from Controller.BackupConsoleController.\
     google_drive_processor import GoogleDriveProcessor
 from Model.Clouds.google_drive_cloud import GoogleDriveCloud
@@ -17,7 +17,7 @@ class GDSProcessorState(Enum):
     COMPLETE = 5
 
 
-class GoogleDriveSourceProcessor(BackupProgramProcessor):
+class GoogleDriveSourceProcessor(ProgramProcessor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._state = GDSProcessorState.START
@@ -30,18 +30,24 @@ class GoogleDriveSourceProcessor(BackupProgramProcessor):
                is not None
 
     def process_request(self, str_request):
-        if str_request == "help":
+        if str_request == "help" and self._state != GDSProcessorState.COMPLETE:
             self._sender.send_text(self.help)
+        if str_request == "abort":
+            self._current_task.remove_source(
+                self._current_source.source_title)
+            self._state = GDSProcessorState.START
+            self._sender.send_text("Настройка google drive source прервана")
+            return True
         elif (self._state == GDSProcessorState.START and
               re.match(r"googleDrive", str_request, re.IGNORECASE)
               is not None):
-            self._current_task.add_destination(self._current_source)
+            self._current_task.add_source(self._current_source)
             self._sender.send_text(
                 "Настройка googleDrive source\n"
                 "Введите название: ", end="")
             self._state = GDSProcessorState.NAMING
         elif self._state == GDSProcessorState.NAMING:
-            self._current_source.title = str_request
+            self._current_source.source_title = str_request
             self._sender.send_text("Авторизация в google drive")
             self._google_drive_processor.process_request("start")
             self._state = GDSProcessorState.SETUP_GOOGLE_DRIVE
@@ -59,7 +65,8 @@ class GoogleDriveSourceProcessor(BackupProgramProcessor):
             self._state = GDSProcessorState.ADD_FILE_REMAINING
         elif self._state == GDSProcessorState.ADD_FILE_REMAINING:
             if str_request != "":
-                self._current_source.add_element_to_restore(File(str_request))
+                self._current_task.add_element_to_restore(
+                    File(file_path=str_request), self._current_source)
             else:
                 self._sender.send_text("Настройка Google Drive source завершена")
                 self._state = GDSProcessorState.COMPLETE
@@ -67,10 +74,11 @@ class GoogleDriveSourceProcessor(BackupProgramProcessor):
             return self._google_drive_processor.process_request(str_request)
         else:
             self._sender.send_text("Ошибка")
+        return False
 
     def is_finished(self):
         return self._state == GDSProcessorState.COMPLETE
 
     @property
     def help(self):
-        pass
+        return "google_drive_source_processor"

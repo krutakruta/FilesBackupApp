@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from Controller.BackupConsoleController.\
-    backup_program_processor import BackupProgramProcessor
+    backup_program_processor import ProgramProcessor
 from Controller.BackupConsoleController.\
     yandex_disk_processor import YandexDiskProcessor
 from Model.Clouds.yandex_disk_cloud import YandexDiskCloud
@@ -16,7 +16,7 @@ class YDSProcessorState(Enum):
     COMPLETE = 5
 
 
-class YandexDiskSourceProcessor(BackupProgramProcessor):
+class YandexDiskSourceProcessor(ProgramProcessor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._current_source = YandexDiskCloud(self._args_provider)
@@ -30,6 +30,11 @@ class YandexDiskSourceProcessor(BackupProgramProcessor):
     def process_request(self, str_request):
         if str_request == "help":
             self._sender.send_text(self.help)
+        elif str_request == "abort":
+            self._current_task.remove_source(
+                self._current_source.source_title)
+            self._state = YDSProcessorState.START
+            return True
         elif (self._state == YDSProcessorState.START and
                 re.match(r"yandexDisk", str_request, re.IGNORECASE)
                 is not None):
@@ -72,4 +77,4 @@ class YandexDiskSourceProcessor(BackupProgramProcessor):
 
     @property
     def help(self):
-        pass
+        return "yandex_disk_source_processor"

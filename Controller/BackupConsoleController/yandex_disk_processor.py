@@ -84,6 +84,8 @@ class YandexDiskProcessor(Processor):
             self.process_request("start")
 
     def _handle_authorized_state(self, str_request):
+        if str_request == "quit":
+            return True
         if re.match(r"dirlist.*", str_request) is not None:
             path = re.match(r"dirlist ?(.*)", str_request).group(1)
             try:

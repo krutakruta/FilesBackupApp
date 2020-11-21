@@ -15,8 +15,8 @@ from Utilities.useful_functions import parse_path_and_get_path_sheet
 class File(IBackupElement, IRestoreElement,
            IGoogleDriveBackupable, IYandexDiskBackupable,
            IGoogleDriveRecovering):
-    def __init__(self, file_path=None):
-        self._file_path = file_path
+    def __init__(self, **kwargs):
+        self._file_path = kwargs.pop("file_path", None)
         self._include_flag = True
         self._backup_log = []
         self._restore_log = []
@@ -70,6 +70,10 @@ class File(IBackupElement, IRestoreElement,
 
     def restore_from_google_drive(self, google_service, dst_path, **kwargs):
         try:
+            if (google_service is None or
+                    not google_service.is_ready()):
+                return f"GoogleDriveRestore: сервис google не было доступен "\
+                       f"при попытке восстановить файл {self._file_path}"
             restore_result = []
             google_files = GoogleDriveCloud.get_target_files(
                 google_service, self._file_path)
@@ -87,7 +91,7 @@ class File(IBackupElement, IRestoreElement,
                         f"{self._file_path} - успех")
                 except PermissionError:
                     restore_result.append(
-                        f"GoogleDriveRestore: ошибка доступа к файлу " \
+                        f"GoogleDriveRestore: ошибка доступа к файлу "
                         f"{dst_path + g_file['name']}")
             return "\n".join(restore_result)
         except Exception as ex:

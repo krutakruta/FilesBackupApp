@@ -17,9 +17,5 @@ class IFilesSource:
         raise NotImplementedError()
 
     @abstractmethod
-    def add_element_to_restore(self, element):
-        raise NotImplementedError()
-
-    @abstractmethod
     def restore(self, element):
         raise NotImplementedError()

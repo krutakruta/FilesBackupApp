@@ -35,7 +35,6 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
         self._destination_title = dest_title
         self._source_title = source_title
         self._sub_paths_to_backup = []
-        self._elements_to_restore = []
         self._destination_sub_path_to_restore = "/"
         self._credentials = self._create_credentials(client_id, client_sec)
         self._scopes = ['https://www.googleapis.com/auth/drive']
@@ -268,10 +267,6 @@ class GoogleDriveCloud(IBackupDestination, IFilesSource):
     @check_type_decorator(str)
     def set_destination_sub_path_to_restore(self, sub_path):
         self._destination_sub_path_to_restore = sub_path
-
-    @check_type_decorator(IRestoreElement)
-    def add_element_to_restore(self, element):
-        self._elements_to_restore.append(element)
 
     @property
     def destination_title(self):

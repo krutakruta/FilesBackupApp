@@ -1,32 +1,34 @@
 from abc import abstractmethod
 
 
-class IBackupElementProcessorsProvider:
+class ISetupRestoreTaskProcessorsProvider:
     @abstractmethod
-    def get_all_backup_elements_processors(self, **kwargs):
+    def get_setup_restore_task_processors(self, **kwargs):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_main_source_processors(self, **kwargs):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_source_processors(self, **kwargs):
         raise NotImplementedError()
 
 
-class IDestinationProcessorsProvider:
+class ISetupBackupTaskProcessorsProvider:
     @abstractmethod
-    def get_all_destination_processors(self, **kwargs):
+    def get_setup_backup_task_processors(self, **kwargs):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_main_destination_processors(self, **kwargs):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_destination_processors(self, **kwargs):
         raise NotImplementedError()
 
 
-class ISetupProcessorsProvider:
-    @abstractmethod
-    def get_all_setup_processors(self, **kwargs):
-        raise NotImplementedError()
-
-
-class IRestoreFilesProcessorsProvider:
-    @abstractmethod
-    def get_all_restore_files_processors(self, **kwargs):
-        raise NotImplementedError()
-
-
-class IArgsProvider(IDestinationProcessorsProvider,
-                    IBackupElementProcessorsProvider,
-                    ISetupProcessorsProvider,
-                    IRestoreFilesProcessorsProvider):
+class IArgsProvider(ISetupRestoreTaskProcessorsProvider,
+                    ISetupBackupTaskProcessorsProvider):
     pass

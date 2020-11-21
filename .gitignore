@@ -17,8 +17,8 @@ Model/Clouds/__pycache__/google_drive_destination.cpython-36.pyc
 Model/Clouds/__pycache__/yandex_disk_destination.cpython-36.pyc
 Model/Clouds/__pycache__
 Controller/BackupConsoleController/RestoreElementsProcessors/__pycache__/
-
+Controller/BackupConsoleController/SourceProcessors/__pycache__/
 
 x.py
 token.pickle
-problem.txt
+plan.txt

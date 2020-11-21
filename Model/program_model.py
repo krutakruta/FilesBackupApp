@@ -22,6 +22,11 @@ class ProgramModel:
             raise ThereIsNoTaskWithSuchName()
         return self._backup_tasks[task_name].launch_backup()
 
+    def launch_restore(self, task_name):
+        if task_name not in self._restore_tasks:
+            raise ThereIsNoTaskWithSuchName()
+        return self._restore_tasks[task_name].restore()
+
     def create_restore_task(self, task_name):
         if task_name in self._restore_tasks:
             raise TaskWithTheSameNameAlreadyExist()

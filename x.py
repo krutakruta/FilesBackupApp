@@ -58,12 +58,13 @@ def smain():
     d.authorize()
     print(d.xxx())
 
+def a(first, second, **kwargs):
+    print(kwargs)
+
 
 if __name__ == '__main__':
-    x = [1, 2, 3]
-    x.append(*[4, 5])
-    print(x)
-
+    x = (i for i in [1, 2, 3])
+    print(1 in x)
 
 
 

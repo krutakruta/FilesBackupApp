@@ -1,5 +1,3 @@
-from Controller.BackupConsoleController.BackupElementsProcessors.\
-    file_processor import FileProcessor
 from Controller.BackupConsoleController.DestinationProcessors.\
     google_drive_destination_processor import \
     GoogleDriveDestinationProcessor
@@ -7,23 +5,32 @@ from Controller.BackupConsoleController.DestinationProcessors.\
     main_destination_processor import MainDestinationProcessor
 from Controller.BackupConsoleController.DestinationProcessors\
     .yandex_disk_destination_processor import YandexDiskDestinationProcessor
+from Controller.BackupConsoleController.SourceProcessors.\
+    google_drive_source_processor import GoogleDriveSourceProcessor
+from Controller.BackupConsoleController.SourceProcessors.\
+    main_source_processor import MainSourceProcessor
+from Controller.BackupConsoleController.SourceProcessors.\
+    yandex_disk_source_processor import YandexDiskSourceProcessor
 from Utilities.ArgsProvider.i_args_provider import IArgsProvider
-from Controller.BackupConsoleController.RestoreElementsProcessors.\
-    files_restore_processor import FilesRestoreProcessor
 
 
 class ArgsProvider(IArgsProvider):
-    def get_all_setup_processors(self, **kwargs):
-        return (self.get_all_backup_elements_processors(**kwargs) +
-                self.get_all_destination_processors(**kwargs))
+    def get_setup_backup_task_processors(self, **kwargs):
+        return self.get_main_destination_processors(**kwargs)
 
-    def get_all_destination_processors(self, **kwargs):
+    def get_main_destination_processors(self, **kwargs):
+        return [MainDestinationProcessor(**kwargs)]
+
+    def get_destination_processors(self, **kwargs):
         return [GoogleDriveDestinationProcessor(**kwargs),
-                YandexDiskDestinationProcessor(**kwargs),
-                MainDestinationProcessor(**kwargs)]
+                YandexDiskDestinationProcessor(**kwargs)]
 
-    def get_all_backup_elements_processors(self, **kwargs):
-        return [FileProcessor(**kwargs)]
+    def get_setup_restore_task_processors(self, **kwargs):
+        return self.get_main_source_processors(**kwargs)
 
-    def get_all_restore_files_processors(self, **kwargs):
-        return [FilesRestoreProcessor(**kwargs)]
+    def get_main_source_processors(self, **kwargs):
+        return [MainSourceProcessor(**kwargs)]
+
+    def get_source_processors(self, **kwargs):
+        return [GoogleDriveSourceProcessor(**kwargs),
+                YandexDiskSourceProcessor(**kwargs)]

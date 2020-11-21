@@ -66,6 +66,8 @@ class GoogleDriveProcessor(Processor):
 
 
     def _handle_authorized_state(self, str_request):
+        if str_request == "quit":
+            return True
         if re.match(r"directories", str_request) is not None:
             self._sender.send_text(
                 "\n".join(self._google_drive_model.get_all_directories()))
@@ -83,6 +85,7 @@ class GoogleDriveProcessor(Processor):
                         self._sender.send_text(f"- {item['name']}")
         else:
             self._sender.send_text("Неправильный запрос. Справка: help")
+        return False
 
     def is_finished(self):
         return self._state == GDProcessorState.AUTHORIZED

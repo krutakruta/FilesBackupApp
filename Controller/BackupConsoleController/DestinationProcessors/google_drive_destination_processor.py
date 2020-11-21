@@ -1,6 +1,6 @@
 import re
 from Controller.BackupConsoleController.backup_program_processor \
-    import BackupProgramProcessor
+    import ProgramProcessor
 from Controller.BackupConsoleController.google_drive_processor \
     import GoogleDriveProcessor
 from Model.Clouds.google_drive_cloud import GoogleDriveCloud
@@ -15,7 +15,7 @@ class GDDProcessorState(Enum):
     COMPLETE = 4
 
 
-class GoogleDriveDestinationProcessor(BackupProgramProcessor):
+class GoogleDriveDestinationProcessor(ProgramProcessor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._current_destination = GoogleDriveCloud(self._args_provider)
@@ -28,8 +28,15 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
                is not None
 
     def process_request(self, str_request):
-        if str_request == "help":
+        if str_request == "help" and self._state != GDDProcessorState.COMPLETE:
             self._sender.send_text(self.help)
+        elif str_request == "abort":
+            self._current_task.remove_source(
+                self._current_destination.destination_title)
+            self._state = GDDProcessorState.START
+            self._sender.send_text(
+                "Настройка google drive destination прервана")
+            return True
         elif (self._state == GDDProcessorState.START and
               re.match(r"googleDrive", str_request, re.IGNORECASE)
               is not None):
@@ -61,10 +68,11 @@ class GoogleDriveDestinationProcessor(BackupProgramProcessor):
             return self._google_drive_processor.process_request(str_request)
         else:
             self._sender.send_text("Ошибка")
+        return False
 
     def is_finished(self):
         return self._state == GDDProcessorState.COMPLETE
 
     @property
     def help(self):
-        pass
+        return "google_drive_destination_processor"

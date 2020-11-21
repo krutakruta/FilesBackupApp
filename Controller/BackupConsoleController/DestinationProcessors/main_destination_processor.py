@@ -1,7 +1,7 @@
 from enum import Enum
 from re import match as re_match
 from Controller.BackupConsoleController. \
-    backup_program_processor import BackupProgramProcessor
+    backup_program_processor import ProgramProcessor
 from Model.model_exceptions import TaskError
 from Utilities.useful_functions import \
     process_req_and_remove_sub_proc_if_its_finished
@@ -12,7 +12,7 @@ class DestinationProcessorState(Enum):
     SETUP_DESTINATION = 1
 
 
-class MainDestinationProcessor(BackupProgramProcessor):
+class MainDestinationProcessor(ProgramProcessor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._current_destination = None
@@ -20,7 +20,7 @@ class MainDestinationProcessor(BackupProgramProcessor):
         self._current_processor = None
 
     def fit_for_request(self, str_request):
-        return re_match(r"add destination.*|remove destination.*|",
+        return re_match(r"add destination.*|remove destination.*",
                         str_request) is not None
 
     def process_request(self, str_request):
@@ -34,12 +34,15 @@ class MainDestinationProcessor(BackupProgramProcessor):
             else:
                 self._sender.send_text(
                     "Не удалось выйти, т.к. настройка не завершена")
-        elif str_request == "help":
+        elif str_request == "help" and self._current_processor is None:
             self._sender.send_text(self.help)
         elif self._state == DestinationProcessorState.START:
             self._process_start_state(str_request)
         elif self._state == DestinationProcessorState.SETUP_DESTINATION:
-            return self._process_adding_destination_state(str_request)
+            finished = self._process_adding_destination_state(str_request)
+            if finished:
+                self._state = DestinationProcessorState.START
+            return finished
         return False
 
     def _process_start_state(self, str_request):
@@ -63,11 +66,10 @@ class MainDestinationProcessor(BackupProgramProcessor):
 
     def _process_adding_destination_state(self, str_request):
         if self._current_processor:
-            finished = process_req_and_remove_sub_proc_if_its_finished(
+            return process_req_and_remove_sub_proc_if_its_finished(
                 str_request, self._current_processor,
                 self._remove_current_processor)
-            return False
-        for processor in self._args_provider.get_all_destination_processors(
+        for processor in self._args_provider.get_destination_processors(
                 current_task=self._current_task,
                 sender=self._sender,
                 args_provider=self._args_provider):
@@ -105,4 +107,4 @@ class MainDestinationProcessor(BackupProgramProcessor):
 
     @property
     def help(self):
-        pass
+        return "main_destination_processor"
